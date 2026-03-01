@@ -62,8 +62,11 @@ export default function JoinPage() {
   return (
     <main className="p-8 max-w-3xl mx-auto">
       <h1 className="text-3xl font-bold mb-4">Join Us</h1>
-      <p className="mb-8 text-gray-700 dark:text-gray-300">
+      <p className="mb-4 text-gray-700 dark:text-gray-300">
         Become a volunteer and help us make a difference! Fill out the form below to join our team at Rishihood University.
+      </p>
+      <p className="mb-8 px-4 py-3 rounded-lg bg-primary-50 dark:bg-primary-900/20 text-primary-800 dark:text-primary-200 font-medium border border-primary-200 dark:border-primary-800">
+        Result of first cohort: <strong>17th March</strong>
       </p>
       <form
         onSubmit={handleSubmit}

@@ -5,13 +5,16 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { Calendar, MapPin, ArrowLeft } from "lucide-react";
+import { Calendar, MapPin, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
+
+type MediaItem = { url: string; type: "image" | "video" };
 
 type WorkItem = {
   id: string;
   title: string;
   date: string | { seconds: number };
   image_url: string;
+  media?: MediaItem[];
   location?: string;
   description: string;
 };
@@ -29,6 +32,7 @@ export default function WorkDetailPage() {
   const id = params?.id as string;
   const [work, setWork] = useState<WorkItem | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mediaIndex, setMediaIndex] = useState(0);
 
   useEffect(() => {
     if (!id) {
@@ -41,10 +45,16 @@ export default function WorkDetailPage() {
         const list = Array.isArray(data) ? data : [];
         const found = list.find((w: WorkItem) => w.id === id) || null;
         setWork(found);
+        setMediaIndex(0);
         setLoading(false);
       })
       .catch(() => setLoading(false));
   }, [id]);
+
+  const mediaList: MediaItem[] =
+    work?.media?.length ? work.media : work?.image_url ? [{ url: work.image_url, type: "image" }] : [];
+  const currentMedia = mediaList[mediaIndex];
+  const hasMultiple = mediaList.length > 1;
 
   if (loading) {
     return (
@@ -91,16 +101,63 @@ export default function WorkDetailPage() {
       >
         <div className="bg-white rounded-2xl shadow-lg border border-neutral-200 overflow-hidden">
           <div className="relative w-full aspect-video sm:aspect-[2/1] bg-primary-100">
-            <Image
-              src={work.image_url}
-              alt={work.title}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 896px"
-              priority
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-primary-900/80 via-primary-900/20 to-transparent" />
-            <div className="absolute bottom-4 left-4 right-4">
+            {currentMedia?.type === "video" ? (
+              <video
+                key={currentMedia.url}
+                src={currentMedia.url}
+                controls
+                className="w-full h-full object-cover"
+                playsInline
+              />
+            ) : currentMedia?.url ? (
+              <Image
+                src={currentMedia.url}
+                alt={work.title}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 896px"
+                priority
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-primary-600/50">
+                No media
+              </div>
+            )}
+            {hasMultiple && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setMediaIndex((i) => (i - 1 + mediaList.length) % mediaList.length)}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+                  aria-label="Previous media"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMediaIndex((i) => (i + 1) % mediaList.length)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+                  aria-label="Next media"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+                <div className="absolute bottom-14 left-4 right-4 flex justify-center gap-1.5">
+                  {mediaList.map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setMediaIndex(i)}
+                      className={`w-2 h-2 rounded-full transition-colors ${
+                        i === mediaIndex ? "bg-white" : "bg-white/50 hover:bg-white/70"
+                      }`}
+                      aria-label={`Go to media ${i + 1}`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-primary-900/80 via-primary-900/20 to-transparent pointer-events-none" />
+            <div className="absolute bottom-4 left-4 right-4 pointer-events-none">
               <h1 className="text-2xl sm:text-4xl font-bold text-white drop-shadow-lg">
                 {work.title}
               </h1>

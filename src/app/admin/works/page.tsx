@@ -1,15 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Calendar, MapPin, Image as ImageIcon } from "lucide-react";
+import { Calendar, MapPin, Image as ImageIcon, Video, X, Star } from "lucide-react";
 import Link from "next/link";
 import CloudinaryUpload from "@/components/CloudinaryUpload";
+
+export type MediaItem = { url: string; type: "image" | "video"; featured?: boolean };
 
 interface WorkItem {
   id: string;
   title: string;
   date: string;
   image_url: string;
+  media?: MediaItem[];
   location?: string | null;
   description: string;
   sort_order?: number;
@@ -18,17 +21,18 @@ interface WorkItem {
 export default function AdminWorksPage() {
   const [works, setWorks] = useState<WorkItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [thumbFailed, setThumbFailed] = useState<Record<string, boolean>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editDate, setEditDate] = useState("");
-  const [editImageUrl, setEditImageUrl] = useState("");
+  const [editMedia, setEditMedia] = useState<MediaItem[]>([]);
   const [editLocation, setEditLocation] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [saving, setSaving] = useState(false);
   const [adding, setAdding] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newDate, setNewDate] = useState("");
-  const [newImageUrl, setNewImageUrl] = useState("");
+  const [newMedia, setNewMedia] = useState<MediaItem[]>([]);
   const [newLocation, setNewLocation] = useState("");
   const [newDescription, setNewDescription] = useState("");
 
@@ -50,7 +54,13 @@ export default function AdminWorksPage() {
     setEditingId(w.id);
     setEditTitle(w.title);
     setEditDate(w.date || "");
-    setEditImageUrl(w.image_url || "");
+    setEditMedia(
+      Array.isArray(w.media) && w.media.length > 0
+        ? w.media.map((m) => ({ ...m, featured: m.featured ?? false }))
+        : w.image_url
+          ? [{ url: w.image_url, type: "image" as const, featured: false }]
+          : []
+    );
     setEditLocation(w.location || "");
     setEditDescription(w.description || "");
   };
@@ -68,7 +78,7 @@ export default function AdminWorksPage() {
         body: JSON.stringify({
           title: editTitle,
           date: editDate || undefined,
-          image_url: editImageUrl || undefined,
+          media: editMedia,
           location: editLocation || null,
           description: editDescription,
         }),
@@ -100,7 +110,7 @@ export default function AdminWorksPage() {
         body: JSON.stringify({
           title: newTitle.trim(),
           date: newDate,
-          image_url: newImageUrl || "",
+          media: newMedia,
           location: newLocation.trim() || null,
           description: newDescription.trim(),
           sort_order: works.length,
@@ -111,7 +121,7 @@ export default function AdminWorksPage() {
         setAdding(false);
         setNewTitle("");
         setNewDate("");
-        setNewImageUrl("");
+        setNewMedia([]);
         setNewLocation("");
         setNewDescription("");
       }
@@ -158,18 +168,68 @@ export default function AdminWorksPage() {
                       className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     />
                   </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <CloudinaryUpload
-                      onUpload={(url) => setEditImageUrl(url)}
-                      folder="morethanme/works"
-                      accept="image/*"
-                      maxSizeMB={5}
-                    />
-                    {editImageUrl && (
-                      <span className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
-                        <ImageIcon className="w-4 h-4" /> Image set
-                      </span>
-                    )}
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Media (images & videos)</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Add as many as you like — each upload is added to the list. Hover a thumbnail and click ✕ to remove.</p>
+                    <div className="flex flex-wrap gap-3 mb-2">
+                      {editMedia.map((m, i) => (
+                        <div key={i} className="relative group w-28 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-700">
+                          <div className="w-28 h-24 relative">
+                            {m.type === "image" ? (
+                              <img src={m.url} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Video className="w-8 h-8 text-gray-500" />
+                              </div>
+                            )}
+                            <span className="absolute top-0.5 left-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-black/60 text-white">
+                              {m.type}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setEditMedia((prev) => prev.filter((_, j) => j !== i))}
+                              className="absolute top-0.5 right-0.5 p-1 rounded-full bg-red-500 text-white hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                          <label className="flex items-center gap-1 p-1.5 border-t border-gray-200 dark:border-gray-600 cursor-pointer bg-gray-50 dark:bg-gray-800">
+                            <input
+                              type="checkbox"
+                              checked={!!m.featured}
+                              onChange={(e) =>
+                                setEditMedia((prev) =>
+                                  prev.map((item, j) => (j === i ? { ...item, featured: e.target.checked } : item))
+                                )
+                              }
+                              className="rounded border-gray-300 text-primary-600"
+                            />
+                            <Star className={`w-3.5 h-3.5 ${m.featured ? "text-amber-500 fill-amber-500" : "text-gray-400"}`} />
+                            <span className="text-[10px] font-medium text-gray-600 dark:text-gray-400">Featured</span>
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <CloudinaryUpload
+                        onUpload={(url) => url && setEditMedia((prev) => [...prev, { url, type: "image", featured: false }])}
+                        folder="morethanme/works"
+                        accept="image/*"
+                        maxSizeMB={5}
+                        resourceType="image"
+                        resetAfterUpload
+                        buttonLabel="+ Add image"
+                      />
+                      <CloudinaryUpload
+                        onUpload={(url) => url && setEditMedia((prev) => [...prev, { url, type: "video", featured: false }])}
+                        folder="morethanme/works"
+                        accept="video/*"
+                        maxSizeMB={100}
+                        resourceType="video"
+                        resetAfterUpload
+                        buttonLabel="+ Add video"
+                      />
+                    </div>
                   </div>
                   <input
                     type="text"
@@ -197,14 +257,33 @@ export default function AdminWorksPage() {
               ) : (
                 <>
                   <div className="flex flex-col sm:flex-row sm:items-start gap-4 p-4">
-                    <div className="w-full sm:w-40 h-28 rounded-lg bg-gray-100 dark:bg-gray-700 shrink-0 overflow-hidden">
-                      {work.image_url ? (
-                        <img src={work.image_url} alt={work.title} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400">
-                          <ImageIcon className="w-10 h-10" />
-                        </div>
-                      )}
+                    <div className="w-full sm:w-40 h-28 rounded-lg bg-gray-100 dark:bg-gray-700 shrink-0 overflow-hidden flex items-center justify-center">
+                      {(() => {
+                        const firstImage = work.media?.find((m) => m.type === "image" && m.url) ?? work.media?.[0];
+                        const thumbUrl = firstImage?.type === "video" ? null : (firstImage?.url ?? work.image_url);
+                        const isVideo = firstImage?.type === "video";
+                        const failed = thumbFailed[work.id];
+                        if (isVideo)
+                          return (
+                            <div className="w-full h-full flex items-center justify-center bg-gray-200 dark:bg-gray-600">
+                              <Video className="w-10 h-10 text-gray-500" />
+                            </div>
+                          );
+                        if (thumbUrl && !failed)
+                          return (
+                            <img
+                              src={thumbUrl}
+                              alt={work.title}
+                              className="w-full h-full object-cover"
+                              onError={() => setThumbFailed((prev) => ({ ...prev, [work.id]: true }))}
+                            />
+                          );
+                        return (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400">
+                            <ImageIcon className="w-10 h-10" />
+                          </div>
+                        );
+                      })()}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-gray-900 dark:text-white">{work.title}</div>
@@ -221,6 +300,11 @@ export default function AdminWorksPage() {
                         )}
                       </div>
                       <p className="mt-2 text-sm text-gray-600 dark:text-gray-300 line-clamp-2">{work.description}</p>
+                      {(work.media?.length ?? 0) > 1 && (
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                          {(work.media?.length ?? 0)} media items
+                        </p>
+                      )}
                     </div>
                     <div className="flex gap-2 shrink-0">
                       <button onClick={() => startEdit(work)} className="text-sm text-primary-600 dark:text-primary-400 font-medium hover:underline">
@@ -254,14 +338,68 @@ export default function AdminWorksPage() {
                   className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <CloudinaryUpload
-                  onUpload={(url) => setNewImageUrl(url)}
-                  folder="morethanme/works"
-                  accept="image/*"
-                  maxSizeMB={5}
-                />
-                {newImageUrl && <span className="text-xs text-green-600 dark:text-green-400">Image set</span>}
+              <div>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Media (images & videos)</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Add as many as you like — each upload is added to the list. Hover a thumbnail and click ✕ to remove.</p>
+                <div className="flex flex-wrap gap-3 mb-2">
+                  {newMedia.map((m, i) => (
+                    <div key={i} className="relative group w-28 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-700">
+                      <div className="w-28 h-24 relative">
+                        {m.type === "image" ? (
+                          <img src={m.url} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Video className="w-8 h-8 text-gray-500" />
+                          </div>
+                        )}
+                        <span className="absolute top-0.5 left-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-black/60 text-white">
+                          {m.type}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setNewMedia((prev) => prev.filter((_, j) => j !== i))}
+                          className="absolute top-0.5 right-0.5 p-1 rounded-full bg-red-500 text-white hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <label className="flex items-center gap-1 p-1.5 border-t border-gray-200 dark:border-gray-600 cursor-pointer bg-gray-50 dark:bg-gray-800">
+                        <input
+                          type="checkbox"
+                          checked={!!m.featured}
+                          onChange={(e) =>
+                            setNewMedia((prev) =>
+                              prev.map((item, j) => (j === i ? { ...item, featured: e.target.checked } : item))
+                            )
+                          }
+                          className="rounded border-gray-300 text-primary-600"
+                        />
+                        <Star className={`w-3.5 h-3.5 ${m.featured ? "text-amber-500 fill-amber-500" : "text-gray-400"}`} />
+                        <span className="text-[10px] font-medium text-gray-600 dark:text-gray-400">Featured</span>
+                      </label>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <CloudinaryUpload
+                    onUpload={(url) => url && setNewMedia((prev) => [...prev, { url, type: "image", featured: false }])}
+                    folder="morethanme/works"
+                    accept="image/*"
+                    maxSizeMB={5}
+                    resourceType="image"
+                    resetAfterUpload
+                    buttonLabel="+ Add image"
+                  />
+                  <CloudinaryUpload
+                    onUpload={(url) => url && setNewMedia((prev) => [...prev, { url, type: "video", featured: false }])}
+                    folder="morethanme/works"
+                    accept="video/*"
+                    maxSizeMB={100}
+                    resourceType="video"
+                    resetAfterUpload
+                    buttonLabel="+ Add video"
+                  />
+                </div>
               </div>
               <input
                 type="text"

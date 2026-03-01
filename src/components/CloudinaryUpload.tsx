@@ -8,6 +8,10 @@ interface CloudinaryUploadProps {
   folder?: string;
   accept?: string;
   maxSizeMB?: number;
+  resourceType?: "image" | "video" | "auto";
+  /** When true, clear preview after upload so the button reappears for adding more */
+  resetAfterUpload?: boolean;
+  buttonLabel?: string;
   className?: string;
 }
 
@@ -16,6 +20,9 @@ export default function CloudinaryUpload({
   folder = "morethanme",
   accept = "image/*",
   maxSizeMB = 5,
+  resourceType = "auto",
+  resetAfterUpload = false,
+  buttonLabel,
   className = "",
 }: CloudinaryUploadProps) {
   const [uploading, setUploading] = useState(false);
@@ -38,6 +45,7 @@ export default function CloudinaryUpload({
       const formData = new FormData();
       formData.append("file", file);
       formData.append("folder", folder);
+      formData.append("resource_type", resourceType);
 
       const res = await fetch("/api/upload", {
         method: "POST",
@@ -50,7 +58,11 @@ export default function CloudinaryUpload({
         throw new Error(data.error || "Upload failed");
       }
       onUpload(data.url, data.public_id);
-      setPreview(data.url);
+      if (resetAfterUpload) {
+        setPreview(null);
+      } else {
+        setPreview(data.url);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
@@ -99,7 +111,7 @@ export default function CloudinaryUpload({
           className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 disabled:opacity-50"
         >
           <Upload className="w-4 h-4" />
-          {uploading ? "Uploading..." : "Upload image or file"}
+          {uploading ? "Uploading..." : buttonLabel ?? "Upload image or file"}
         </button>
       )}
       {error && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>}

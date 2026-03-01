@@ -154,7 +154,7 @@ export default function AdminAssetsPage() {
         </Link>
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Manage Assets</h2>
         <p className="text-gray-600 dark:text-gray-400 text-sm">
-          Upload images and videos to Cloudinary. Assets with &quot;Show on home&quot; appear in the main page gallery.
+          Upload images and videos to Cloudinary. Toggle &quot;Featured&quot; to show an asset in the home page gallery.
         </p>
         <p className="mt-2 text-amber-700 dark:text-amber-400 text-xs">
           Assets are stored in Firebase Firestore <code className="bg-amber-100 dark:bg-amber-900/40 px-1 rounded">media_assets</code> collection.
@@ -214,9 +214,9 @@ export default function AdminAssetsPage() {
               <option key={c} value={c}>{c}</option>
             ))}
           </select>
-          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300" title="Show this in the home page gallery">
             <input type="checkbox" checked={newShowOnHome} onChange={(e) => setNewShowOnHome(e.target.checked)} className="rounded border-gray-300 text-primary-600" />
-            Show on home
+            Featured (home gallery)
           </label>
           <button
             type="button"
@@ -303,9 +303,9 @@ export default function AdminAssetsPage() {
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
-              <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+              <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300" title="Show this in the home page gallery">
                 <input type="checkbox" checked={editShowOnHome} onChange={(e) => setEditShowOnHome(e.target.checked)} className="rounded border-gray-300 text-primary-600" />
-                Show on home page
+                Featured (home gallery)
               </label>
             </div>
             <div className="flex gap-2 mt-6">

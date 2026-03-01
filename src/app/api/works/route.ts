@@ -8,7 +8,9 @@ export async function GET() {
     const dateVal = doc.date;
     const dateStr =
       dateVal?.toDate ? dateVal.toDate().toISOString().slice(0, 10) : typeof dateVal === "string" ? dateVal.slice(0, 10) : null;
-    return { id: d.id, ...doc, date: dateStr ?? dateVal };
+    const media = Array.isArray(doc.media) ? doc.media : doc.image_url ? [{ url: doc.image_url, type: "image" }] : [];
+    const image_url = media[0]?.url ?? doc.image_url ?? "";
+    return { id: d.id, ...doc, image_url, media, date: dateStr ?? dateVal };
   });
   return NextResponse.json(data);
 }

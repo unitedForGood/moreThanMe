@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Button from "../../components/Button";
 import { useRouter } from "next/navigation";
@@ -59,10 +59,16 @@ const milestones = [
   { year: "Today", label: "A growing movement across Rishihood and beyond." },
 ];
 
+const FEATURED_CAROUSEL_INTERVAL_MS = 4500;
+const isVideoUrl = (src: string) =>
+  src.toLowerCase().includes("/video/") || src.toLowerCase().endsWith(".mp4") || src.toLowerCase().endsWith(".webm");
+
 export default function AboutPage() {
   const router = useRouter();
   const [foundingMembers, setFoundingMembers] = useState<TeamMember[]>([]);
   const [storyImageUrl, setStoryImageUrl] = useState<string | null>(null);
+  const [featuredPhotos, setFeaturedPhotos] = useState<{ src: string; alt: string }[]>([]);
+  const [featuredIndex, setFeaturedIndex] = useState(0);
 
   useEffect(() => {
     fetch("/api/team")
@@ -95,6 +101,32 @@ export default function AboutPage() {
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    fetch("/api/gallery/featured")
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          const imagesOnly = data
+            .filter((p: { src?: string }) => p.src && !isVideoUrl(p.src))
+            .map((p: { src: string; alt?: string }) => ({ src: p.src, alt: p.alt || "Our story" }));
+          setFeaturedPhotos(imagesOnly);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const hasFeaturedSlideshow = featuredPhotos.length > 0;
+
+  useEffect(() => {
+    if (!hasFeaturedSlideshow) return;
+    const t = setInterval(() => {
+      setFeaturedIndex((i) => (i + 1) % featuredPhotos.length);
+    }, FEATURED_CAROUSEL_INTERVAL_MS);
+    return () => clearInterval(t);
+  }, [hasFeaturedSlideshow, featuredPhotos.length]);
+
+  const showStoryMedia = hasFeaturedSlideshow || storyImageUrl;
 
   return (
     <main className="overflow-x-hidden">
@@ -133,7 +165,7 @@ export default function AboutPage() {
                 </p>
               </motion.div>
             </div>
-            {storyImageUrl && (
+            {showStoryMedia && (
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 whileInView={{ opacity: 1, x: 0 }}
@@ -141,15 +173,53 @@ export default function AboutPage() {
                 transition={{ duration: 0.8, delay: 0.3 }}
                 className="flex-1 max-w-lg w-full"
               >
-                <div className="relative group">
-                  <div className="absolute -inset-1 bg-gradient-to-r from-primary-400 to-primary-600 rounded-2xl opacity-20 group-hover:opacity-30 transition-opacity blur-sm" />
-                  <Image
-                    src={storyImageUrl}
-                    alt="Our Story - community and impact"
-                    width={500}
-                    height={400}
-                    className="relative rounded-2xl shadow-xl object-cover w-full h-auto"
-                  />
+                <div className="relative group aspect-[5/4] rounded-2xl overflow-hidden shadow-xl bg-primary-100">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-primary-400 to-primary-600 rounded-2xl opacity-20 group-hover:opacity-30 transition-opacity blur-sm -z-10" />
+                  {hasFeaturedSlideshow ? (
+                    <>
+                      <AnimatePresence mode="wait" initial={false}>
+                        <motion.div
+                          key={featuredIndex}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.5 }}
+                          className="absolute inset-0"
+                        >
+                          <Image
+                            src={featuredPhotos[featuredIndex].src}
+                            alt={featuredPhotos[featuredIndex].alt}
+                            fill
+                            sizes="(max-width: 1024px) 100vw, 512px"
+                            className="object-cover"
+                          />
+                        </motion.div>
+                      </AnimatePresence>
+                      {featuredPhotos.length > 1 && (
+                        <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
+                          {featuredPhotos.map((_, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={() => setFeaturedIndex(i)}
+                              className={`h-2 rounded-full transition-all ${
+                                i === featuredIndex ? "w-6 bg-white" : "w-2 bg-white/50 hover:bg-white/70"
+                              }`}
+                              aria-label={`Go to image ${i + 1}`}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : storyImageUrl ? (
+                    <Image
+                      src={storyImageUrl}
+                      alt="Our Story - community and impact"
+                      fill
+                      sizes="(max-width: 1024px) 100vw, 512px"
+                      className="object-cover"
+                    />
+                  ) : null}
                 </div>
               </motion.div>
             )}

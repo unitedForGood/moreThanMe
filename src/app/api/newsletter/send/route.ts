@@ -9,16 +9,21 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json().catch(() => ({}));
-  const { subject, htmlContent, newsletterId, newsletterTitle, newsletterUrl, newsletterDescription, recipients } = body;
+  const { subject, htmlContent, newsletterId, newsletterTitle, newsletterUrl, newsletterDescription, recipients, testMode } = body;
 
-  if (!recipients || !Array.isArray(recipients) || recipients.length === 0) {
+  const TEST_EMAIL = "monu2feb2004@gmail.com";
+
+  const isTest = testMode === true;
+  const effectiveRecipients = isTest ? [TEST_EMAIL] : recipients;
+
+  if (!effectiveRecipients || !Array.isArray(effectiveRecipients) || effectiveRecipients.length === 0) {
     return NextResponse.json(
-      { error: "Select at least one recipient" },
+      { error: isTest ? "Test mode requires no recipient selection" : "Select at least one recipient" },
       { status: 400 }
     );
   }
 
-  const validEmails = recipients.filter((e: unknown) => typeof e === "string" && e.includes("@"));
+  const validEmails = effectiveRecipients.filter((e: unknown) => typeof e === "string" && e.includes("@"));
   if (validEmails.length === 0) {
     return NextResponse.json(
       { error: "No valid recipient emails" },
@@ -64,22 +69,26 @@ export async function POST(request: Request) {
     sent += batch.length;
   }
 
-  try {
-    const { adminDb } = await import("@/lib/firebaseAdmin");
-    await adminDb.collection("newsletter_sends").add({
-      newsletter_id: body.newsletterId || null,
-      subject: finalSubject,
-      recipient_count: sent,
-      recipient_emails: validEmails,
-      sent_by: admin.email,
-      sent_at: new Date(),
-    });
-  } catch (logErr) {
-    console.error("Newsletter send log error:", logErr);
+  if (!isTest) {
+    try {
+      const { adminDb } = await import("@/lib/firebaseAdmin");
+      await adminDb.collection("newsletter_sends").add({
+        newsletter_id: body.newsletterId || null,
+        subject: finalSubject,
+        html_content: finalHtml,
+        recipient_count: sent,
+        recipient_emails: validEmails,
+        sent_by: admin.email,
+        sent_at: new Date(),
+      });
+    } catch (logErr) {
+      console.error("Newsletter send log error:", logErr);
+    }
   }
 
   return NextResponse.json({
     ok: true,
     sent,
+    ...(isTest && { testMode: true, preview: { subject: finalSubject, html: finalHtml } }),
   });
 }

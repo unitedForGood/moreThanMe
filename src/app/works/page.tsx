@@ -6,11 +6,14 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Calendar } from "lucide-react";
 
+type MediaItem = { url: string; type: "image" | "video" };
+
 type WorkItem = {
   id: string;
   title: string;
   date: string | { seconds: number };
   image_url: string;
+  media?: MediaItem[];
   location?: string;
   description: string;
 };

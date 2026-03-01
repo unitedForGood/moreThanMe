@@ -10,9 +10,13 @@ export async function GET(request: Request) {
   const data = snap.docs.map((d) => {
     const doc = d.data();
     const date = doc.date;
+    const media = Array.isArray(doc.media) ? doc.media : [];
+    const image_url = media[0]?.url ?? doc.image_url ?? "";
     return {
       id: d.id,
       ...doc,
+      image_url,
+      media,
       date: date?.toDate ? date.toDate().toISOString().slice(0, 10) : (typeof date === "string" ? date.slice(0, 10) : null),
     };
   });
@@ -24,7 +28,7 @@ export async function POST(request: Request) {
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json().catch(() => ({}));
-  const { title, date, image_url, location, description, sort_order } = body;
+  const { title, date, image_url, media, location, description, sort_order } = body;
   if (!title || !date) {
     return NextResponse.json({ error: "title and date required" }, { status: 400 });
   }
@@ -34,10 +38,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "invalid date" }, { status: 400 });
   }
 
+  const mediaList = Array.isArray(media)
+    ? media
+        .filter((m: { url?: string; type?: string }) => m && m.url)
+        .map((m: { url: string; type?: string; featured?: boolean }) => ({
+          url: String(m.url).trim(),
+          type: m.type === "video" ? "video" : "image",
+          featured: !!m.featured,
+        }))
+    : image_url
+      ? [{ url: String(image_url).trim(), type: "image" as const, featured: false }]
+      : [];
+  const firstImage = mediaList.find((m: { type: string }) => m.type === "image")?.url ?? mediaList[0]?.url ?? "";
+
   const ref = await adminDb.collection("works").add({
     title: String(title).trim(),
     date: dateObj,
-    image_url: image_url ? String(image_url).trim() : "",
+    image_url: firstImage,
+    media: mediaList,
     location: location ? String(location).trim() : null,
     description: description ? String(description).trim() : "",
     sort_order: typeof sort_order === "number" ? sort_order : 0,
@@ -68,7 +86,22 @@ export async function PATCH(request: Request) {
     const dateObj = new Date(body.date);
     if (!isNaN(dateObj.getTime())) updates.date = dateObj;
   }
-  if (body.image_url !== undefined) updates.image_url = body.image_url ? String(body.image_url).trim() : "";
+  if (body.media !== undefined) {
+    const mediaList = Array.isArray(body.media)
+      ? body.media
+          .filter((m: { url?: string; type?: string }) => m && m.url)
+          .map((m: { url: string; type?: string; featured?: boolean }) => ({
+            url: String(m.url).trim(),
+            type: m.type === "video" ? "video" : "image",
+            featured: !!m.featured,
+          }))
+      : [];
+    updates.media = mediaList;
+    const firstImage = mediaList.find((m: { type: string }) => m.type === "image")?.url ?? mediaList[0]?.url ?? "";
+    updates.image_url = firstImage;
+  } else if (body.image_url !== undefined) {
+    updates.image_url = body.image_url ? String(body.image_url).trim() : "";
+  }
   if (body.location !== undefined) updates.location = body.location ? String(body.location).trim() : null;
   if (body.description !== undefined) updates.description = String(body.description).trim();
   if (body.sort_order !== undefined) updates.sort_order = Number(body.sort_order);

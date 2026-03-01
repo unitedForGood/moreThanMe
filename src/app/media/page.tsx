@@ -59,7 +59,12 @@ export default function MediaPage() {
     fetch("/api/press").then((r) => r.json()).then((d) => Array.isArray(d) && setPress(d)).catch(() => {});
   }, []);
   useEffect(() => {
-    fetch("/api/assets").then((r) => r.json()).then((d) => Array.isArray(d) && setPhotos(d)).catch(() => {});
+    fetch("/api/gallery/all")
+      .then((r) => r.json())
+      .then((d) => {
+        if (Array.isArray(d)) setPhotos(d.map((p: { src: string; alt: string; category?: string }) => ({ url: p.src, alt: p.alt, title: p.alt, category: p.category || "General" })));
+      })
+      .catch(() => {});
   }, []);
   useEffect(() => {
     fetch("/api/site-settings")

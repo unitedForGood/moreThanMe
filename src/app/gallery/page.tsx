@@ -6,36 +6,37 @@ type Photo = { src: string; alt: string; category: string; tags: string[]; descr
 
 export default function GalleryPage() {
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
 
   useEffect(() => {
-    fetch("/api/assets")
+    setLoading(true);
+    fetch("/api/gallery/all")
       .then((r) => r.json())
       .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setPhotos(
-            data.map((a: { url: string; alt?: string; title?: string; category?: string; description?: string; tags?: string[] }) => ({
-              src: a.url,
-              alt: a.alt || a.title || "Gallery",
-              category: a.category || "General",
-              tags: Array.isArray(a.tags) ? a.tags : [],
-              description: a.description || "",
-            }))
-          );
-        }
+        setPhotos(Array.isArray(data) ? data : []);
       })
-      .catch(() => {});
+      .catch(() => setPhotos([]))
+      .finally(() => setLoading(false));
   }, []);
 
-  const categories = ["All", ...Array.from(new Set(photos.map((p) => p.category)))];
+  const categories = ["All", ...Array.from(new Set(photos.map((p) => p.category || "General").filter(Boolean)))].sort((a, b) => (a === "All" ? -1 : b === "All" ? 1 : a.localeCompare(b)));
+  const searchTerm = search.trim().toLowerCase();
+
   const filteredPhotos = photos.filter((photo) => {
-    const matchesCategory = category === "All" ? true : photo.category === category;
-    const matchesSearch = search
-      ? photo.description.toLowerCase().includes(search.toLowerCase()) ||
-        photo.tags.some((tag) => tag.toLowerCase().includes(search.toLowerCase()))
-      : true;
-    return matchesCategory && matchesSearch;
+    const cat = photo.category || "General";
+    const matchesCategory = category === "All" ? true : cat === category;
+    if (!matchesCategory) return false;
+
+    if (!searchTerm) return true;
+
+    const alt = (photo.alt || "").toLowerCase();
+    const desc = (photo.description || "").toLowerCase();
+    const tagMatch = Array.isArray(photo.tags) && photo.tags.some((tag) => String(tag).toLowerCase().includes(searchTerm));
+    const altMatch = alt.includes(searchTerm);
+    const descMatch = desc.includes(searchTerm);
+    return altMatch || descMatch || tagMatch;
   });
 
   return (
@@ -59,10 +60,19 @@ export default function GalleryPage() {
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
-      {photos.length > 0 ? (
-        <PhotoGallery photos={filteredPhotos} />
-      ) : (
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-24">
+          <div className="w-10 h-10 border-2 border-primary-600 border-t-transparent rounded-full animate-spin mb-4" />
+          <p className="text-neutral-500">Loading gallery…</p>
+        </div>
+      ) : photos.length === 0 ? (
         <p className="text-center text-neutral-500 py-12">No gallery images yet. Add media in the admin panel.</p>
+      ) : filteredPhotos.length === 0 ? (
+        <p className="text-center text-neutral-500 py-12">
+          No images match your search or filter. Try a different category or search term.
+        </p>
+      ) : (
+        <PhotoGallery photos={filteredPhotos} />
       )}
     </div>
   );

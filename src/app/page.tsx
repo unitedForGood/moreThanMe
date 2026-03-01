@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Button from "../components/Button";
 import { Users, HeartHandshake, GraduationCap } from "lucide-react";
 import PhotoGallery from "../components/PhotoGallery";
@@ -9,25 +9,22 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 const HERO_IMAGE = "/hero.jpg";
+const FEATURED_CAROUSEL_INTERVAL_MS = 4500;
+
+const isVideoUrl = (src: string) =>
+  src.toLowerCase().includes("/video/") || src.toLowerCase().endsWith(".mp4") || src.toLowerCase().endsWith(".webm");
 
 export default function Home() {
   const [photos, setPhotos] = useState<{ src: string; alt: string; category: string; tags: string[]; description: string }[]>([]);
   const [aboutImageUrl, setAboutImageUrl] = useState<string | null>(null);
+  const [featuredImageIndex, setFeaturedImageIndex] = useState(0);
 
   useEffect(() => {
-    fetch("/api/assets?home=true")
+    fetch("/api/gallery/featured")
       .then((r) => r.json())
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
-          setPhotos(
-            data.map((a: { url: string; alt: string | null; title: string | null; category: string; description: string | null; tags?: string[] }) => ({
-              src: a.url,
-              alt: a.alt || a.title || "Gallery",
-              category: a.category || "General",
-              tags: Array.isArray(a.tags) ? a.tags : [],
-              description: a.description || "",
-            }))
-          );
+          setPhotos(data);
         }
       })
       .catch(() => {});
@@ -43,6 +40,18 @@ export default function Home() {
       })
       .catch(() => {});
   }, []);
+
+  const featuredImagesOnly = photos.filter((p) => p.src && !isVideoUrl(p.src));
+  const hasFeaturedImages = featuredImagesOnly.length > 0;
+
+  useEffect(() => {
+    if (!hasFeaturedImages) return;
+    const t = setInterval(() => {
+      setFeaturedImageIndex((i) => (i + 1) % featuredImagesOnly.length);
+    }, FEATURED_CAROUSEL_INTERVAL_MS);
+    return () => clearInterval(t);
+  }, [hasFeaturedImages, featuredImagesOnly.length]);
+
   const router = useRouter();
   const handleJoin = () => {
     router.push("/joinUs");
@@ -218,8 +227,8 @@ export default function Home() {
               </motion.div>
             </div>
 
-            {/* Right: Image - from media_assets */}
-            {aboutImageUrl && (
+            {/* Right: Featured images carousel (one by one) */}
+            {(hasFeaturedImages || aboutImageUrl) && (
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 whileInView={{ opacity: 1, x: 0 }}
@@ -227,15 +236,53 @@ export default function Home() {
                 transition={{ duration: 0.8, delay: 0.3 }}
                 className="flex-1 max-w-lg"
               >
-                <div className="relative">
-                  <Image
-                    src={aboutImageUrl}
-                    alt="Children playing outdoors"
-                    width={500}
-                    height={400}
-                    className="rounded-2xl shadow-lg object-cover w-full h-auto"
-                  />
-                  <div className="absolute -inset-2 bg-primary-100/50 rounded-2xl -z-10"></div>
+                <div className="relative aspect-[5/4] rounded-2xl overflow-hidden shadow-lg bg-primary-100">
+                  {hasFeaturedImages ? (
+                    <>
+                      <AnimatePresence mode="wait" initial={false}>
+                        <motion.div
+                          key={featuredImageIndex}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.5 }}
+                          className="absolute inset-0"
+                        >
+                          <Image
+                            src={featuredImagesOnly[featuredImageIndex].src}
+                            alt={featuredImagesOnly[featuredImageIndex].alt}
+                            fill
+                            sizes="(max-width: 1024px) 100vw, 512px"
+                            className="object-cover"
+                          />
+                        </motion.div>
+                      </AnimatePresence>
+                      {featuredImagesOnly.length > 1 && (
+                        <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
+                          {featuredImagesOnly.map((_, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={() => setFeaturedImageIndex(i)}
+                              className={`h-2 rounded-full transition-all ${
+                                i === featuredImageIndex ? "w-6 bg-white" : "w-2 bg-white/50 hover:bg-white/70"
+                              }`}
+                              aria-label={`Go to image ${i + 1}`}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : aboutImageUrl ? (
+                    <Image
+                      src={aboutImageUrl}
+                      alt="Our impact"
+                      fill
+                      sizes="(max-width: 1024px) 100vw, 512px"
+                      className="object-cover"
+                    />
+                  ) : null}
+                  <div className="absolute -inset-2 bg-primary-100/50 rounded-2xl -z-10" />
                 </div>
               </motion.div>
             )}
