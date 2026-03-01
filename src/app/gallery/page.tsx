@@ -72,7 +72,7 @@ export default function GalleryPage() {
           No images match your search or filter. Try a different category or search term.
         </p>
       ) : (
-        <PhotoGallery photos={filteredPhotos} />
+        <PhotoGallery photos={filteredPhotos} showViewAllButton={false} />
       )}
     </div>
   );

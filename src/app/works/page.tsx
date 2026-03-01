@@ -6,7 +6,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Calendar } from "lucide-react";
 
-type MediaItem = { url: string; type: "image" | "video" };
+type MediaItem = { url: string; type: "image" | "video"; featured?: boolean };
 
 type WorkItem = {
   id: string;
@@ -95,49 +95,70 @@ export default function WorksPage() {
               <p className="text-neutral-500">No works or events yet. Add them from the admin panel or run the seed.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {works.map((work, index) => (
-                <motion.div
-                  key={work.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.35, delay: index * 0.05 }}
-                >
-                  <Link
-                    href={`/works/${work.id}`}
-                    className="group relative block text-left w-full rounded-2xl overflow-hidden border border-primary-200 shadow-lg hover:shadow-xl hover:border-primary-400 transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-100"
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
+              {works.map((work, index) => {
+                const mediaList = Array.isArray(work.media) ? work.media : [];
+                const featuredMedia = mediaList.find((m) => m.featured) as MediaItem | undefined;
+                const primaryMedia = featuredMedia || (mediaList[0] as MediaItem | undefined);
+                const isVideoThumb = primaryMedia?.type === "video";
+                const thumbUrl = primaryMedia?.url || work.image_url;
+
+                return (
+                  <motion.div
+                    key={work.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.35, delay: index * 0.05 }}
+                    className="h-full"
                   >
-                    {/* Card: image on top, theme-colored bottom */}
-                    <div className="bg-white rounded-t-2xl overflow-hidden">
-                      <div className="relative w-full aspect-[4/3] bg-primary-100 overflow-hidden">
-                        <Image
-                          src={work.image_url}
-                          alt={work.title}
-                          fill
-                          className="object-cover transition-transform duration-300 group-hover:scale-105"
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        />
-                        {/* Date badge - theme colored */}
-                        <div className="absolute top-3 left-3 z-10">
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary-600 text-white text-xs font-medium shadow-md">
-                            <Calendar className="w-3.5 h-3.5" />
-                            {formatDate(work.date)}
-                          </span>
+                    <Link
+                      href={`/works/${work.id}`}
+                      className="group relative block text-left w-full h-full rounded-2xl overflow-hidden border border-primary-200 shadow-lg hover:shadow-xl hover:border-primary-400 transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-100"
+                    >
+                      {/* Card: media on top, theme-colored bottom */}
+                      <div className="bg-white rounded-t-2xl overflow-hidden">
+                        <div className="relative w-full aspect-[4/3] bg-primary-100 overflow-hidden">
+                          {isVideoThumb && thumbUrl ? (
+                            <video
+                              key={thumbUrl}
+                              src={thumbUrl}
+                              className="w-full h-full object-cover"
+                              muted
+                              loop
+                              playsInline
+                              autoPlay
+                            />
+                          ) : (
+                            <Image
+                              src={thumbUrl || work.image_url}
+                              alt={work.title}
+                              fill
+                              className="object-cover transition-transform duration-300 group-hover:scale-105"
+                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                            />
+                          )}
+                          {/* Date badge - theme colored */}
+                          <div className="absolute top-3 left-3 z-10">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary-600 text-white text-xs font-medium shadow-md">
+                              <Calendar className="w-3.5 h-3.5" />
+                              {formatDate(work.date)}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    {/* Bottom section - primary theme instead of black */}
-                    <div className="bg-primary-800 p-4 sm:p-5 border-t border-primary-700">
-                      <h2 className="text-lg sm:text-xl font-bold text-white mb-2 line-clamp-2 group-hover:text-primary-100 transition-colors">
-                        {work.title}
-                      </h2>
-                      <p className="text-sm text-white line-clamp-3 leading-relaxed">
-                        {truncate(work.description.replace(/\s+/g, " "), TRUNCATE_LENGTH)}
-                      </p>
-                    </div>
-                  </Link>
-                </motion.div>
-              ))}
+                      {/* Bottom section - primary theme instead of black */}
+                      <div className="bg-primary-800 p-4 sm:p-5 border-t border-primary-700 flex flex-col justify-between min-h-[170px]">
+                        <h2 className="text-lg sm:text-xl font-bold text-white mb-2 line-clamp-2 group-hover:text-primary-100 transition-colors">
+                          {work.title}
+                        </h2>
+                        <p className="text-sm text-white line-clamp-3 leading-relaxed">
+                          {truncate(work.description.replace(/\s+/g, " "), TRUNCATE_LENGTH)}
+                        </p>
+                      </div>
+                    </Link>
+                  </motion.div>
+                );
+              })}
             </div>
           )}
         </div>

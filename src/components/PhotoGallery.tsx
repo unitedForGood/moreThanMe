@@ -13,9 +13,16 @@ interface Photo {
   description: string;
 }
 
-const isValidSrc = (src: string) => typeof src === "string" && src.trim().length > 0 && (src.startsWith("http://") || src.startsWith("https://"));
+interface PhotoGalleryProps {
+  photos: Photo[];
+  /** When true, show the 'View Full Gallery' button (used on homepage). On /gallery it should be false. */
+  showViewAllButton?: boolean;
+}
 
-export default function PhotoGallery({ photos }: { photos: Photo[] }) {
+const isValidSrc = (src: string) =>
+  typeof src === "string" && src.trim().length > 0 && (src.startsWith("http://") || src.startsWith("https://"));
+
+export default function PhotoGallery({ photos, showViewAllButton = true }: PhotoGalleryProps) {
   const [failed, setFailed] = useState<Record<number, boolean>>({});
   const [fullViewIndex, setFullViewIndex] = useState<number | null>(null);
 
@@ -125,13 +132,15 @@ export default function PhotoGallery({ photos }: { photos: Photo[] }) {
           </p>
         </div>
       )}
-      <div className="flex justify-center mt-8">
-        <Link href="/gallery">
-          <button className="bg-primary-600 hover:bg-primary-700 text-white font-semibold px-8 py-3 rounded-lg shadow-sm transition-colors duration-200 text-lg">
-            View Full Gallery
-          </button>
-        </Link>
-      </div>
+      {showViewAllButton && (
+        <div className="flex justify-center mt-8">
+          <Link href="/gallery">
+            <button className="bg-primary-600 hover:bg-primary-700 text-white font-semibold px-8 py-3 rounded-lg shadow-sm transition-colors duration-200 text-lg">
+              View Full Gallery
+            </button>
+          </Link>
+        </div>
+      )}
     </div>
   );
 } 
