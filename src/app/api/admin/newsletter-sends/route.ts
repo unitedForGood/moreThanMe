@@ -15,7 +15,7 @@ export async function GET(request: Request) {
   const snap = await adminDb.collection("newsletter_sends").orderBy("sent_at", "desc").limit(50).get();
   const sends = snap.docs.map((d) => {
     const data = d.data() as Record<string, unknown>;
-    const out = { id: d.id, ...data };
+    const out: Record<string, unknown> = { id: d.id, ...data };
     out.sent_at = toISO(data, "sent_at") ?? data.sent_at;
     return out;
   });
