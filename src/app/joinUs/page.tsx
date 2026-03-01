@@ -42,7 +42,7 @@ export default function JoinPage() {
     const data = await res.json().catch(() => ({}));
     setLoading(false);
     if (res.status === 409 || data.error === "already_registered") {
-      router.push("/joinUs/status?status=already");
+      router.push("/joinUs/status/already");
       return;
     }
     if (!res.ok) {

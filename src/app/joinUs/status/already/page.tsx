@@ -82,22 +82,32 @@ export default function AlreadyStatusPage() {
           <div className="bg-white/80 backdrop-blur-sm border border-emerald-200/50 rounded-2xl p-8 mb-8 shadow-lg hover:shadow-xl transition-all duration-300">
             <div className="text-center">
               <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4 leading-tight">
-                Welcome Back to Our
+                You&apos;re Already
                 <span className="block text-emerald-600 mt-2">
-                  Community Family
+                  With Us
                 </span>
               </h1>
               
-              <div className="bg-emerald-50 border-l-4 border-emerald-400 rounded-lg px-6 py-5 mb-6 text-left">
+              <div className="bg-emerald-50 border-l-4 border-emerald-400 rounded-lg px-6 py-5 mb-4 text-left">
                 <div className="flex items-start space-x-3">
-                  <div className="text-2xl">✅</div>
+                  <div className="text-2xl">💚</div>
                   <div>
                     <h3 className="text-lg font-semibold text-emerald-800 mb-2">
-                      You&apos;re Already Making a Difference
+                      We&apos;re Working Together
                     </h3>
                     <p className="text-emerald-700 leading-relaxed">
-                      Thank you for being a valued member of our mission to create positive change. 
-                      Your continued support helps us build stronger communities together.
+                      You&apos;re already part of our community. Thank you for being with us—your support helps us create real change, and we&apos;re glad to have you on this journey.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-amber-50/80 border border-amber-200 rounded-lg px-6 py-4 mb-6 text-left">
+                <div className="flex items-start space-x-3">
+                  <div className="text-xl">✉️</div>
+                  <div>
+                    <p className="text-amber-900 text-sm leading-relaxed">
+                      <span className="font-semibold">Signing up for someone else?</span> Please use their email address so we can keep our community records accurate and stay in touch with the right person.
                     </p>
                   </div>
                 </div>
@@ -132,7 +142,7 @@ export default function AlreadyStatusPage() {
             </button>
             
             <button
-              onClick={() => router.push("/projects")}
+              onClick={() => router.push("/works")}
               className="group px-8 py-3 bg-white hover:bg-gray-50 text-emerald-600 border-2 border-emerald-600 rounded-lg font-semibold text-lg hover:shadow-md transform transition-all duration-200 hover:scale-105 active:scale-95 flex items-center gap-2"
             >
               <span>📊</span>

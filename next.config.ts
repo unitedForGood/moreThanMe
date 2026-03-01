@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
       { source: "/admin/volunteers", destination: "/admin/team", permanent: false },
       { source: "/admin/users", destination: "/admin/team", permanent: false },
       { source: "/team", destination: "/our-family", permanent: false },
+      { source: "/projects", destination: "/works", permanent: true },
     ];
   },
   images: {
