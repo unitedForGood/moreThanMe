@@ -436,7 +436,7 @@ export default function DonationForm() {
                 <div className="bg-white p-4 rounded-xl flex justify-center items-center">
                   <QRCodeGenerator 
                     upiId={upiId}
-                    payeeName="More Than Me NGO"
+                    payeeName="MoreThanMe NGO"
                   />
                 </div>
               </div>

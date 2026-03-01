@@ -110,7 +110,7 @@ export async function POST(request: Request) {
     if (sendSnap.empty) {
       await adminDb.collection("newsletter_sends").add({
         newsletter_id: null,
-        subject: "Demo: New Newsletter from More Than Me",
+        subject: "Demo: New Newsletter from MoreThanMe",
         recipient_count: 2,
         recipient_emails: ["demo1@rishihood.edu.in", "demo2@rishihood.edu.in"],
         sent_by: admin?.email || "seed-demo",

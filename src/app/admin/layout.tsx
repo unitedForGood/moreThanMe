@@ -157,8 +157,8 @@ export default function AdminLayout({
 
       <footer className="shrink-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 py-4 px-4 md:pl-64">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-center sm:justify-between gap-2 text-sm text-gray-500 dark:text-gray-400">
-          <span>More Than Me · Admin</span>
-          <span>© {new Date().getFullYear()} More Than Me Initiative</span>
+          <span>MoreThanMe · Admin</span>
+          <span>© {new Date().getFullYear()} MoreThanMe Initiative</span>
         </div>
       </footer>
     </div>

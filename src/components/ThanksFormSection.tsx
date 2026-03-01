@@ -91,7 +91,7 @@ export default function ThanksFormSection() {
         className="w-full py-3 px-6 rounded-xl bg-white text-primary-700 font-bold text-lg hover:bg-primary-50 disabled:opacity-50 inline-flex items-center justify-center gap-2 transition-colors"
       >
         <Heart className="w-5 h-5" />
-        {loading ? "Sending..." : "Thanks More Than Me team"}
+        {loading ? "Sending..." : "Thanks MoreThanMe team"}
       </button>
     </motion.form>
   );

@@ -140,7 +140,7 @@ export default function WelcomeStatusPage() {
           {/* Footer - no university name */}
           <div className="text-center">
             <p className="text-neutral-500 text-sm">
-              More Than Me — Hearts for India
+              MoreThanMe — Hearts for India
             </p>
           </div>
         </div>

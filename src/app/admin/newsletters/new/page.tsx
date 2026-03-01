@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import CloudinaryUpload from "@/components/CloudinaryUpload";
+import NewsletterFormattingReference from "@/components/newsletters/NewsletterFormattingReference";
+import { buildNewsletterEmailHtml } from "@/lib/newsletterEmail";
 
 const PREDEFINED_CATEGORIES = ["monthly", "weekly", "annual", "special-edition"];
 
@@ -12,24 +14,16 @@ function buildEmailPreview(opts: {
   description: string;
   category: string;
   file_path: string;
+  quote: string;
 }) {
-  const { title, description, category, file_path } = opts;
-  const desc = description ? `<p>${description}</p>` : "";
-  const newsletterUrl = file_path?.startsWith("http") ? file_path : "";
-  const displayTitle = title || "Newsletter title";
-  return `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <h2 style="color: #A51C30;">More Than Me</h2>
-  <p>Hello!</p>
-  <p>We've published a new newsletter: <strong>${displayTitle}</strong>.</p>
-  ${desc}
-  ${newsletterUrl ? `<p><a href="${newsletterUrl}" style="color: #A51C30; font-weight: bold;">Read the newsletter →</a></p>` : ""}
-  <p>Thank you for being part of our community.</p>
-  <p style="color: #666; font-size: 12px; margin-top: 40px;">— More Than Me · Rishihood University</p>
-</body>
-</html>`;
+  const { title, description, file_path, quote } = opts;
+  const newsletterUrl = file_path?.startsWith("http") ? file_path : undefined;
+  return buildNewsletterEmailHtml({
+    newsletterTitle: title || undefined,
+    newsletterDescription: description || undefined,
+    newsletterUrl,
+    quote: quote || undefined,
+  });
 }
 
 export default function AdminNewslettersNewPage() {
@@ -38,6 +32,7 @@ export default function AdminNewslettersNewPage() {
     description: "",
     category: "monthly",
     file_path: "",
+    quote: "",
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -51,14 +46,20 @@ export default function AdminNewslettersNewPage() {
       const res = await fetch("/api/newsletters/add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          title: formData.title,
+          description: formData.description,
+          category: formData.category,
+          file_path: formData.file_path,
+          quote: formData.quote || undefined,
+        }),
       });
       if (!res.ok) {
         const err = await res.json();
         throw new Error(err.error || "Failed to add newsletter");
       }
       setMessage({ type: "success", text: "Newsletter created successfully!" });
-      setFormData({ title: "", description: "", category: "monthly", file_path: "" });
+      setFormData({ title: "", description: "", category: "monthly", file_path: "", quote: "" });
       setUploadKey((k) => k + 1);
     } catch (err) {
       setMessage({
@@ -114,16 +115,33 @@ export default function AdminNewslettersNewPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Quote (optional)
+              </label>
+              <textarea
+                name="quote"
+                value={formData.quote}
+                onChange={handleChange}
+                rows={2}
+                placeholder="e.g. Small acts, when multiplied by millions of people, can transform the world."
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Shown in the email. Leave blank to hide the quote block.</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Description
               </label>
               <textarea
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
-                rows={3}
-                placeholder="Brief description of the newsletter content"
+                rows={5}
+                placeholder="Brief description of the newsletter content. You can use **bold**, *italic*, bullet lists, and more."
                 className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Formatting: <strong>**bold**</strong> · <em>*italic*</em> · <code>~~strikethrough~~</code> · <code>`code`</code> · <code>==highlight==</code> · <code>-</code> or <code>1.</code> lists · <code>[link](url)</code> · <code>#</code> <code>##</code> <code>###</code> headers · <code>&gt; quote</code> · <code>---</code> rule
+              </p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -145,17 +163,29 @@ export default function AdminNewslettersNewPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Newsletter file (PDF) *
+                Newsletter link (optional)
               </label>
+              <input
+                type="url"
+                name="file_path"
+                value={formData.file_path}
+                onChange={handleChange}
+                placeholder="https://docs.google.com/... or https://example.com/newsletter.pdf"
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 mb-3">Paste a link (Google Doc, PDF URL, etc.) for the &quot;Read the newsletter →&quot; button. Or upload a PDF below.</p>
+              <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Or upload a PDF</p>
               <CloudinaryUpload
                 key={uploadKey}
-                onUpload={(url) => setFormData((prev) => ({ ...prev, file_path: url }))}
+                onUpload={(url) => setFormData((prev) => ({ ...prev, file_path: url || prev.file_path }))}
                 folder="morethanme/newsletters"
                 accept=".pdf,application/pdf"
                 maxSizeMB={10}
+                resourceType="raw"
+                buttonLabel="Upload PDF"
               />
               {formData.file_path && (
-                <p className="mt-2 text-xs text-green-600 dark:text-green-400">File uploaded.</p>
+                <p className="mt-2 text-xs text-green-600 dark:text-green-400">Link or file set. Clear the URL above or upload again to replace.</p>
               )}
             </div>
             {message && (
@@ -171,7 +201,7 @@ export default function AdminNewslettersNewPage() {
             )}
             <button
               type="submit"
-              disabled={loading || !formData.file_path}
+              disabled={loading}
               className="w-full py-3 px-4 rounded-lg bg-primary-600 text-white font-medium hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? "Creating..." : "Create newsletter"}
@@ -207,6 +237,8 @@ export default function AdminNewslettersNewPage() {
           </div>
         </div>
       </div>
+
+      <NewsletterFormattingReference />
     </>
   );
 }

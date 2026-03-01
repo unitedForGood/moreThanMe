@@ -104,7 +104,7 @@ export default function ContactPage() {
             <span className="inline-flex items-center px-4 py-2 rounded-full bg-white/20 text-white text-sm font-medium mb-4">
               Say thanks
             </span>
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-2">Thank More Than Me</h2>
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-2">Thank MoreThanMe</h2>
             <p className="text-white/90">Optional name and message—or just click the button to send your thanks.</p>
           </motion.div>
           <ThanksFormSection />

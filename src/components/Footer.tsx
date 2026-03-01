@@ -78,7 +78,7 @@ export default function Footer() {
         <div className="border-t border-neutral-700 pt-4 sm:pt-6">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4 text-xs sm:text-sm text-neutral-400">
             <div>
-              <p>&copy; {new Date().getFullYear()} More Than Me Initiative. All rights reserved.</p>
+              <p>&copy; {new Date().getFullYear()} MoreThanMe Initiative. All rights reserved.</p>
             </div>
             <div className="flex items-center gap-4">
               <Link href="/privacy" className="hover:text-neutral-300 transition-colors">Privacy Policy</Link>

@@ -32,7 +32,7 @@ export function getEmailFooter(): string {
         &nbsp;·&nbsp;
         <a href="mailto:${CONTACT_EMAIL}" style="color: ${EMAIL_BRAND.primary}; font-weight: 600; text-decoration: none;">${CONTACT_EMAIL}</a>
       </p>
-      <p style="margin: 0; font-size: 12px;">More Than Me — Hearts for India</p>
+      <p style="margin: 0; font-size: 12px;">MoreThanMe — Hearts for India</p>
     </div>
   `;
 }
@@ -57,7 +57,7 @@ export interface SendEmailOptions {
 export async function sendEmail(options: SendEmailOptions): Promise<{ messageId?: string; error?: string }> {
   const apiKey = process.env.BREVO_API_KEY;
   const senderEmail = process.env.BREVO_SENDER_EMAIL || "unitedforgood2025@gmail.com";
-  const senderName = process.env.BREVO_SENDER_NAME || "More Than Me";
+  const senderName = process.env.BREVO_SENDER_NAME || "MoreThanMe";
 
   if (!apiKey) {
     return { error: "BREVO_API_KEY is not configured" };

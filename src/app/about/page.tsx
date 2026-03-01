@@ -55,7 +55,7 @@ const values = [
 const milestones = [
   { year: "Ideation", label: "Conversations during internships sparked the idea." },
   { year: "Mentorship", label: "Encouragement from Paroksh Sir and mentors to take action." },
-  { year: "Launch", label: "More Than Me took shape with workshops and events." },
+  { year: "Launch", label: "MoreThanMe took shape with workshops and events." },
   { year: "Today", label: "A growing movement across Rishihood and beyond." },
 ];
 
@@ -430,7 +430,7 @@ export default function AboutPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
                 <div className="space-y-6">
                   <p className="text-lg text-neutral-600 leading-relaxed">
-                    The idea for More Than Me began during conversations among
+                    The idea for MoreThanMe began during conversations among
                     friends while we were interning and reflecting on our own
                     growth. We realized that structured learning opportunities
                     and collaborative discussions can create meaningful impact
@@ -449,7 +449,7 @@ export default function AboutPage() {
                 </div>
                 <div className="space-y-6">
                   <p className="text-lg text-neutral-600 leading-relaxed">
-                    Today, More Than Me organizes workshops, skill-development
+                    Today, MoreThanMe organizes workshops, skill-development
                     sessions, and campus-based events focused on personal and
                     professional growth. To support event logistics, materials,
                     and operations, we collect a fixed participation fee for

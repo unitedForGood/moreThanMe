@@ -116,7 +116,7 @@ export default function Navbar() {
         <Link href="/" className="flex items-center cursor-pointer focus:outline-none focus-visible:outline-none" aria-label="Go to home page">
           <Image
             src="/morethanmelogo.png"
-            alt="More Than Me Logo"
+            alt="MoreThanMe Logo"
             width={150}
             height={40}
             className="h-10 w-auto mr-3"

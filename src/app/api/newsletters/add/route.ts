@@ -4,17 +4,18 @@ import { adminDb } from "@/lib/firebaseAdmin";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { title, description, category, file_path } = body;
+    const { title, description, category, file_path, quote } = body;
 
-    if (!title || !category || !file_path) {
-      return NextResponse.json({ error: "Missing required fields: title, category, file_path" }, { status: 400 });
+    if (!title || !category) {
+      return NextResponse.json({ error: "Missing required fields: title, category" }, { status: 400 });
     }
 
     const ref = await adminDb.collection("newsletters").add({
       title,
       description: description || null,
       category,
-      file_path,
+      file_path: file_path || null,
+      quote: quote && String(quote).trim() ? String(quote).trim() : null,
       created_at: new Date(),
     });
     const doc = await ref.get();
