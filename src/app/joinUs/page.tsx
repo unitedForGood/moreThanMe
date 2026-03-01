@@ -79,6 +79,7 @@ export default function JoinPage() {
             folder="morethanme/team"
             accept="image/*"
             maxSizeMB={10}
+            public
           />
           {imageUrl && <span className="ml-2 text-xs text-green-600 dark:text-green-400">Photo added</span>}
         </div>

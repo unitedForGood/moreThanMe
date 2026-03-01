@@ -13,6 +13,8 @@ interface CloudinaryUploadProps {
   resetAfterUpload?: boolean;
   buttonLabel?: string;
   className?: string;
+  /** When true, use public upload endpoint (no admin auth). Use only for public forms e.g. Join Us. */
+  public?: boolean;
 }
 
 export default function CloudinaryUpload({
@@ -24,6 +26,7 @@ export default function CloudinaryUpload({
   resetAfterUpload = false,
   buttonLabel,
   className = "",
+  public: usePublicUpload = false,
 }: CloudinaryUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +50,8 @@ export default function CloudinaryUpload({
       formData.append("folder", folder);
       formData.append("resource_type", resourceType);
 
-      const res = await fetch("/api/upload", {
+      const uploadUrl = usePublicUpload ? "/api/upload/public" : "/api/upload";
+      const res = await fetch(uploadUrl, {
         method: "POST",
         credentials: "include",
         body: formData,
