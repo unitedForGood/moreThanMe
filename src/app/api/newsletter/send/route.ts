@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminFromRequest } from "@/lib/adminAuth";
-import { sendEmail, getEmailFooter, EMAIL_BRAND } from "@/lib/brevo";
+import { sendEmail, getEmailFooter } from "@/lib/brevo";
+import { buildNewsletterEmailHtml } from "@/lib/newsletterEmail";
 
 export async function POST(request: Request) {
   const admin = await getAdminFromRequest(request);
@@ -9,7 +10,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json().catch(() => ({}));
-  const { subject, htmlContent, newsletterId, newsletterTitle, newsletterUrl, newsletterDescription, recipients, testMode } = body;
+  const { subject, htmlContent, newsletterId, newsletterTitle, newsletterUrl, newsletterDescription, newsletterQuote, recipients, testMode } = body;
 
   const TEST_EMAIL = "monu2feb2004@gmail.com";
 
@@ -31,20 +32,16 @@ export async function POST(request: Request) {
     );
   }
 
-  const finalSubject = subject || "New Newsletter from More Than Me";
-  const desc = newsletterDescription ? `<p>${newsletterDescription}</p>` : "";
-  const defaultBody = `
-  <h2 style="color: ${EMAIL_BRAND.primary}; margin-top: 0;">More Than Me</h2>
-  <p>Hello!</p>
-  <p>${newsletterTitle ? `We've published a new newsletter: <strong>${newsletterTitle}</strong>.` : "A new newsletter has been published."}</p>
-  ${desc}
-  ${newsletterUrl ? `<p><a href="${newsletterUrl}" style="color: ${EMAIL_BRAND.primary}; font-weight: 600;">Read the newsletter →</a></p>` : ""}
-  <p>Thank you for being part of our community.</p>
-  ${getEmailFooter()}
-  `;
+  const finalSubject = subject || "New Newsletter from MoreThanMe";
   const finalHtml =
     htmlContent ||
-    `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: ${EMAIL_BRAND.text};">${defaultBody}</body></html>`;
+    buildNewsletterEmailHtml({
+      newsletterTitle: newsletterTitle || undefined,
+      newsletterDescription: newsletterDescription || undefined,
+      newsletterUrl: newsletterUrl || undefined,
+      quote: newsletterQuote || undefined,
+      footerHtml: getEmailFooter(),
+    });
 
   const recipientsList = validEmails.map((email: string) => ({ email, name: undefined }));
 

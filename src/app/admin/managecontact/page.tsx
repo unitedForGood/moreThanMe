@@ -142,7 +142,7 @@ export default function AdminManageContactPage() {
           {loading ? (
             <div className="p-6 text-gray-500 dark:text-gray-400">Loading...</div>
           ) : thanks.length === 0 ? (
-            <p className="p-6 text-gray-600 dark:text-gray-400 text-sm">No thanks yet. They appear when someone uses the &ldquo;Thanks More Than Me team&rdquo; section on the Contact page.</p>
+            <p className="p-6 text-gray-600 dark:text-gray-400 text-sm">No thanks yet. They appear when someone uses the &ldquo;Thanks MoreThanMe team&rdquo; section on the Contact page.</p>
           ) : (
             <ul className="divide-y divide-gray-200 dark:divide-gray-700">
               {thanks.map((t) => (

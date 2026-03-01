@@ -2,30 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { Mail, Send, Users, ChevronDown, ChevronUp, FlaskConical, Eye, X } from "lucide-react";
+import { buildNewsletterEmailHtml } from "@/lib/newsletterEmail";
 
 const TEST_EMAIL = "monu2feb2004@gmail.com";
-
-function buildNewsletterHtml(opts: {
-  newsletterTitle?: string;
-  newsletterDescription?: string;
-  newsletterUrl?: string;
-}) {
-  const { newsletterTitle, newsletterDescription, newsletterUrl } = opts;
-  const desc = newsletterDescription ? `<p>${newsletterDescription}</p>` : "";
-  return `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <h2 style="color: #A51C30;">More Than Me</h2>
-  <p>Hello!</p>
-  <p>${newsletterTitle ? `We've published a new newsletter: <strong>${newsletterTitle}</strong>.` : "A new newsletter has been published."}</p>
-  ${desc}
-  ${newsletterUrl ? `<p><a href="${newsletterUrl}" style="color: #A51C30; font-weight: bold;">Read the newsletter →</a></p>` : ""}
-  <p>Thank you for being part of our community.</p>
-  <p style="color: #666; font-size: 12px; margin-top: 40px;">— More Than Me · Rishihood University</p>
-</body>
-</html>`;
-}
 
 interface Newsletter {
   id: string;
@@ -33,6 +12,7 @@ interface Newsletter {
   description: string | null;
   category: string;
   file_path: string;
+  quote?: string | null;
   created_at: string;
 }
 
@@ -48,7 +28,7 @@ export default function SendNewsletterEmail() {
   const [newsletters, setNewsletters] = useState<Newsletter[]>([]);
   const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
   const [selectedNewsletterId, setSelectedNewsletterId] = useState<string>("");
-  const [subject, setSubject] = useState("New Newsletter from More Than Me");
+  const [subject, setSubject] = useState("New Newsletter from MoreThanMe");
   const [description, setDescription] = useState("");
   const [newsletterUrl, setNewsletterUrl] = useState("");
   const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
@@ -100,7 +80,9 @@ export default function SendNewsletterEmail() {
     setSelectedEmails(next);
   };
 
-  const newsletterTitle = newsletters.find((n) => n.id === selectedNewsletterId)?.title;
+  const selectedNewsletter = newsletters.find((n) => n.id === selectedNewsletterId);
+  const newsletterTitle = selectedNewsletter?.title;
+  const newsletterQuote = selectedNewsletter?.quote ?? undefined;
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,6 +104,7 @@ export default function SendNewsletterEmail() {
           newsletterTitle,
           newsletterDescription: description || undefined,
           newsletterUrl: newsletterUrl || undefined,
+          newsletterQuote,
           recipients: Array.from(selectedEmails),
         }),
       });
@@ -154,6 +137,7 @@ export default function SendNewsletterEmail() {
           newsletterTitle,
           newsletterDescription: description || undefined,
           newsletterUrl: newsletterUrl || undefined,
+          newsletterQuote,
           recipients: [],
           testMode: true,
         }),
@@ -176,10 +160,11 @@ export default function SendNewsletterEmail() {
   };
 
   const showPreviewOnly = () => {
-    const html = buildNewsletterHtml({
+    const html = buildNewsletterEmailHtml({
       newsletterTitle: newsletterTitle || undefined,
       newsletterDescription: description || undefined,
       newsletterUrl: newsletterUrl || undefined,
+      quote: newsletterQuote,
     });
     setPreview({ subject, html });
     setPreviewOnly(true);
@@ -239,8 +224,8 @@ export default function SendNewsletterEmail() {
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              rows={2}
-              placeholder="Brief description for the email body"
+              rows={4}
+              placeholder="Supports **bold**, *italic*, ~~strikethrough~~, `code`, ==highlight==, lists, # headers, > quote, --- rule, [link](url)."
               className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
           </div>

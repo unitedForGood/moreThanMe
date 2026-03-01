@@ -2,8 +2,11 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, FileText, Calendar, Save } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, FileText, Calendar, Save, Trash2 } from "lucide-react";
 import CloudinaryUpload from "@/components/CloudinaryUpload";
+import NewsletterFormattingReference from "@/components/newsletters/NewsletterFormattingReference";
+import { buildNewsletterEmailHtml } from "@/lib/newsletterEmail";
 
 const PREDEFINED_CATEGORIES = ["monthly", "weekly", "annual", "special-edition"];
 
@@ -13,6 +16,7 @@ interface NewsletterData {
   description?: string | null;
   category: string;
   file_path: string;
+  quote?: string | null;
   created_at: string;
 }
 
@@ -21,24 +25,16 @@ function buildEmailPreview(opts: {
   description: string;
   category: string;
   file_path: string;
+  quote: string;
 }) {
-  const { title, description, file_path } = opts;
-  const desc = description ? `<p>${description}</p>` : "";
-  const newsletterUrl = file_path?.startsWith("http") ? file_path : "";
-  const displayTitle = title || "Newsletter title";
-  return `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <h2 style="color: #A51C30;">More Than Me</h2>
-  <p>Hello!</p>
-  <p>We've published a new newsletter: <strong>${displayTitle}</strong>.</p>
-  ${desc}
-  ${newsletterUrl ? `<p><a href="${newsletterUrl}" style="color: #A51C30; font-weight: bold;">Read the newsletter →</a></p>` : ""}
-  <p>Thank you for being part of our community.</p>
-  <p style="color: #666; font-size: 12px; margin-top: 40px;">— More Than Me · Rishihood University</p>
-</body>
-</html>`;
+  const { title, description, file_path, quote } = opts;
+  const newsletterUrl = file_path?.startsWith("http") ? file_path : undefined;
+  return buildNewsletterEmailHtml({
+    newsletterTitle: title || undefined,
+    newsletterDescription: description || undefined,
+    newsletterUrl,
+    quote: quote || undefined,
+  });
 }
 
 export default function AdminNewsletterDetailPage({
@@ -46,6 +42,7 @@ export default function AdminNewsletterDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const router = useRouter();
   const [id, setId] = useState<string | null>(null);
   const [newsletter, setNewsletter] = useState<NewsletterData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -55,10 +52,12 @@ export default function AdminNewsletterDetailPage({
     description: "",
     category: "monthly",
     file_path: "",
+    quote: "",
   });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [uploadKey, setUploadKey] = useState(0);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -88,6 +87,7 @@ export default function AdminNewsletterDetailPage({
           description: n.description || "",
           category: n.category || "monthly",
           file_path: n.file_path || "",
+          quote: n.quote || "",
         });
       })
       .catch((e) => setError(e.message))
@@ -130,6 +130,32 @@ export default function AdminNewsletterDetailPage({
     new Date(s).toLocaleString("en-IN", { dateStyle: "medium" });
   const emailPreviewHtml = buildEmailPreview(formData);
 
+  const handleDelete = async () => {
+    if (!id) return;
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this newsletter? This cannot be undone."
+    );
+    if (!confirmed) return;
+    setDeleting(true);
+    setMessage(null);
+    try {
+      const res = await fetch(`/api/admin/newsletters/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setMessage({ type: "error", text: data.error || "Failed to delete newsletter." });
+        setDeleting(false);
+        return;
+      }
+      router.push("/admin/newsletters");
+    } catch {
+      setMessage({ type: "error", text: "Delete request failed" });
+      setDeleting(false);
+    }
+  };
+
   if (loading || !id) {
     return (
       <div className="mb-8">
@@ -163,17 +189,30 @@ export default function AdminNewsletterDetailPage({
   return (
     <>
       <div className="mb-8">
-        <Link
-          href="/admin/newsletters"
-          className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 text-sm mb-4"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to newsletters
-        </Link>
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Newsletter details</h2>
-        <p className="text-gray-600 dark:text-gray-400 text-sm">
-          View and edit this newsletter. Changes are saved when you click Update.
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <Link
+              href="/admin/newsletters"
+              className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 text-sm mb-3"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to newsletters
+            </Link>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Newsletter details</h2>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">
+              View and edit this newsletter. Changes are saved when you click Update.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleting}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-red-600 text-red-600 dark:border-red-500 dark:text-red-400 font-medium hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Trash2 className="w-4 h-4" />
+            {deleting ? "Deleting..." : "Delete newsletter"}
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -220,16 +259,33 @@ export default function AdminNewsletterDetailPage({
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Quote (optional)
+                </label>
+                <textarea
+                  name="quote"
+                  value={formData.quote}
+                  onChange={handleChange}
+                  rows={2}
+                  placeholder="e.g. Small acts, when multiplied by millions of people, can transform the world."
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Shown in the email. Leave blank to hide the quote block.</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Description
                 </label>
                 <textarea
                   name="description"
                   value={formData.description}
                   onChange={handleChange}
-                  rows={3}
-                  placeholder="Brief description"
+                  rows={5}
+                  placeholder="Brief description. Use **bold**, *italic*, lists, ==highlight==, [links](url)."
                   className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Formatting: <strong>**bold**</strong> · <em>*italic*</em> · <code>~~strikethrough~~</code> · <code>`code`</code> · <code>==highlight==</code> · <code>-</code> or <code>1.</code> lists · <code>[link](url)</code> · <code>#</code> <code>##</code> <code>###</code> headers · <code>&gt; quote</code> · <code>---</code> rule
+                </p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -251,23 +307,29 @@ export default function AdminNewsletterDetailPage({
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Newsletter file (PDF)
+                  Newsletter link (optional)
                 </label>
+                <input
+                  type="url"
+                  name="file_path"
+                  value={formData.file_path}
+                  onChange={handleChange}
+                  placeholder="https://docs.google.com/... or https://example.com/newsletter.pdf"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 mb-3">Paste a link (Google Doc, PDF URL, etc.) or upload a PDF below for the &quot;Read the newsletter →&quot; button.</p>
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Or upload a PDF</p>
                 <CloudinaryUpload
                   key={uploadKey}
-                  onUpload={(url) => setFormData((prev) => ({ ...prev, file_path: url }))}
+                  onUpload={(url) => setFormData((prev) => ({ ...prev, file_path: url || prev.file_path }))}
                   folder="morethanme/newsletters"
                   accept=".pdf,application/pdf"
                   maxSizeMB={10}
+                  resourceType="raw"
+                  buttonLabel="Upload PDF"
                 />
-                {formData.file_path ? (
-                  <p className="mt-2 text-xs text-green-600 dark:text-green-400">
-                    File set. Upload again to replace.
-                  </p>
-                ) : (
-                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                    Current: {newsletter.file_path ? "Link set" : "No file"}
-                  </p>
+                {newsletter.file_path && !formData.file_path && (
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Existing link: {newsletter.file_path}</p>
                 )}
                 {formData.file_path && (
                   <a
@@ -276,7 +338,7 @@ export default function AdminNewsletterDetailPage({
                     rel="noopener noreferrer"
                     className="mt-1 inline-block text-sm text-primary-600 dark:text-primary-400 hover:underline"
                   >
-                    Open current file →
+                    Open link →
                   </a>
                 )}
               </div>
@@ -331,6 +393,8 @@ export default function AdminNewsletterDetailPage({
           </div>
         </div>
       </div>
+
+      <NewsletterFormattingReference />
     </>
   );
 }

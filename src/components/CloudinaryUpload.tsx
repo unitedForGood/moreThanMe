@@ -8,7 +8,7 @@ interface CloudinaryUploadProps {
   folder?: string;
   accept?: string;
   maxSizeMB?: number;
-  resourceType?: "image" | "video" | "auto";
+  resourceType?: "image" | "video" | "raw" | "auto";
   /** When true, clear preview after upload so the button reappears for adding more */
   resetAfterUpload?: boolean;
   buttonLabel?: string;

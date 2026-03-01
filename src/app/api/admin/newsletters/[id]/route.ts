@@ -50,13 +50,14 @@ export async function PATCH(
   }
 
   const body = await request.json().catch(() => ({}));
-  const { title, description, category, file_path } = body;
+  const { title, description, category, file_path, quote } = body;
 
   const updates: Record<string, unknown> = {};
   if (title !== undefined) updates.title = String(title).trim();
   if (description !== undefined) updates.description = description === "" ? null : String(description).trim();
   if (category !== undefined) updates.category = String(category).trim();
   if (file_path !== undefined) updates.file_path = String(file_path).trim();
+  if (quote !== undefined) updates.quote = quote === "" || quote == null ? null : String(quote).trim();
 
   if (Object.keys(updates).length === 0) {
     const current = serializeDoc(snap);
@@ -74,4 +75,25 @@ export async function PATCH(
   const updated = await ref.get();
   const newsletter = serializeDoc(updated);
   return NextResponse.json({ newsletter });
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const admin = await getAdminFromRequest(request);
+  if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { id } = await params;
+  if (!id) return NextResponse.json({ error: "Missing newsletter id" }, { status: 400 });
+
+  const ref = adminDb.collection("newsletters").doc(id);
+  const snap = await ref.get();
+  if (!snap.exists) {
+    return NextResponse.json({ error: "Newsletter not found" }, { status: 404 });
+  }
+
+  await ref.delete();
+
+  return NextResponse.json({ ok: true });
 }

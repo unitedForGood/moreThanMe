@@ -1,7 +1,7 @@
 import NewsletterList from '@/components/newsletters/NewsletterList';
 
 export const metadata = {
-  title: 'Newsletters | More Than Me',
+  title: 'Newsletters | MoreThanMe',
   description: 'Read our latest newsletters and stay updated with our work',
 };
 
