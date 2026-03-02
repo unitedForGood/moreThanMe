@@ -10,7 +10,7 @@ const REFERENCE_ITEMS = [
   { syntax: "==text==", effect: "Highlight", example: "==Key date== → yellow highlight" },
   { syntax: "- item", effect: "Bullet list", example: "Start line with - or *" },
   { syntax: "1. item", effect: "Numbered list", example: "1. First 2. Second" },
-  { syntax: "[text](url)", effect: "Link", example: "[Visit us](https://morethanme.ngo)" },
+  { syntax: "[text](url)", effect: "Link", example: "[Visit us](https://morethanme.in)" },
   { syntax: "# Heading", effect: "Large heading", example: "# Main section" },
   { syntax: "## Subheading", effect: "Medium heading", example: "## Sub-section" },
   { syntax: "### Small heading", effect: "Small heading", example: "### Minor section" },

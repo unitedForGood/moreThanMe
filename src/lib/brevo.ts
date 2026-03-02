@@ -15,7 +15,7 @@ export const EMAIL_BRAND = {
   textMuted: "#52525b",
 } as const;
 
-const WEBSITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://morethanme.ngo";
+const WEBSITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://morethanme.in";
 const CONTACT_EMAIL = "morethanme.ngo@gmail.com";
 
 /** Rule handbook URL (Team Instruction Handbook) - configurable via HANDBOOK_URL in .env.local */

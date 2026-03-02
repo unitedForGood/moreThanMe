@@ -20,7 +20,7 @@ const BRAND = {
 export const NEWSLETTER_WEBSITE_URL =
   typeof process !== "undefined" && process.env?.NEXT_PUBLIC_SITE_URL
     ? process.env.NEXT_PUBLIC_SITE_URL
-    : "https://morethanme.ngo";
+    : "https://morethanme.in";
 
 function escapeHtml(text: string): string {
   return text
@@ -170,3 +170,5 @@ export function buildNewsletterEmailHtml(opts: NewsletterEmailOptions): string {
 </body>
 </html>`;
 }
+
+
