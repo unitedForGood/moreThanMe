@@ -2,11 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { Shield, Plus, Key, Trash2, X } from "lucide-react";
+import type { AdminRole } from "@/lib/adminRoles";
+import { getAdminRoleLabel } from "@/lib/adminRoles";
 
 interface Admin {
   id: string;
   email: string;
   created_at?: string;
+  role?: AdminRole;
 }
 
 export default function AdminAdminsPage() {
@@ -21,6 +24,7 @@ export default function AdminAdminsPage() {
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [updatePassword, setUpdatePassword] = useState("");
+  const [newRole, setNewRole] = useState<AdminRole>("finance");
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -55,7 +59,7 @@ export default function AdminAdminsPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email: newEmail.trim(), password: newPassword }),
+        body: JSON.stringify({ email: newEmail.trim(), password: newPassword, role: newRole }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -66,6 +70,7 @@ export default function AdminAdminsPage() {
       setShowAddForm(false);
       setNewEmail("");
       setNewPassword("");
+      setNewRole("finance");
       await fetchAdmins();
     } catch {
       setMessage({ type: "error", text: "Request failed" });
@@ -125,6 +130,30 @@ export default function AdminAdminsPage() {
   };
 
   const formatDate = (d: string) => new Date(d).toLocaleDateString("en-IN", { year: "numeric", month: "short", day: "numeric" });
+
+  const handleUpdateRole = async (id: string, role: AdminRole | null) => {
+    setSubmitting(true);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/admin/update-role", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ id, role }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setMessage({ type: "error", text: data.error || "Failed to update role" });
+        return;
+      }
+      setMessage({ type: "success", text: "Role updated." });
+      await fetchAdmins();
+    } catch {
+      setMessage({ type: "error", text: "Request failed" });
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -186,7 +215,7 @@ export default function AdminAdminsPage() {
       {showAddForm && (
         <form onSubmit={handleAdd} className="mb-8 p-6 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 space-y-4">
           <h3 className="font-semibold text-gray-900 dark:text-white">New admin</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <input
               type="email"
               value={newEmail}
@@ -204,6 +233,17 @@ export default function AdminAdminsPage() {
               minLength={6}
               className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
+            <select
+              value={newRole ?? ""}
+              onChange={(e) => setNewRole((e.target.value || null) as AdminRole)}
+              className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            >
+              <option value="">Select role (optional)</option>
+              <option value="super">Super admin (full access)</option>
+              <option value="finance">Finance</option>
+              <option value="events">Events</option>
+              <option value="media">Media</option>
+            </select>
           </div>
           <div className="flex gap-2">
             <button type="submit" disabled={submitting} className="px-4 py-2 rounded-lg bg-primary-600 text-white font-medium disabled:opacity-50">
@@ -240,7 +280,23 @@ export default function AdminAdminsPage() {
                           Super Admin
                         </span>
                       ) : (
-                        <span className="text-gray-500 dark:text-gray-400 text-sm">Admin</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-700 dark:text-gray-200 text-sm">
+                            {getAdminRoleLabel(a.role ?? null)}
+                          </span>
+                          <select
+                            value={a.role ?? ""}
+                            onChange={(e) => handleUpdateRole(a.id, (e.target.value || null) as AdminRole | null)}
+                            disabled={submitting}
+                            className="text-xs px-2 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200"
+                          >
+                            <option value="">No role</option>
+                            <option value="super">Super admin</option>
+                            <option value="finance">Finance</option>
+                            <option value="events">Events</option>
+                            <option value="media">Media</option>
+                          </select>
+                        </div>
                       )}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">

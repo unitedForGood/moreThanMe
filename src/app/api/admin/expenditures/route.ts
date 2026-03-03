@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminFromRequest } from "@/lib/adminAuth";
 import { adminDb } from "@/lib/firebaseAdmin";
+import { requireAdminRole } from "@/lib/adminRoleServer";
 
 function toDateString(d: unknown): string | null {
   if (!d) return null;
@@ -15,6 +16,9 @@ export async function GET(request: Request) {
   const admin = await getAdminFromRequest(request);
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const allowed = await requireAdminRole(admin.email, ["finance"]);
+  if (!allowed) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
   const snap = await adminDb.collection("expenditures").orderBy("date", "desc").get();
   const data = snap.docs.map((d) => {
     const doc = d.data();
@@ -26,6 +30,9 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const admin = await getAdminFromRequest(request);
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const allowed = await requireAdminRole(admin.email, ["finance"]);
+  if (!allowed) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const body = await request.json().catch(() => ({}));
   const { amount, reason, date } = body;
@@ -55,6 +62,9 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   const admin = await getAdminFromRequest(request);
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const allowed = await requireAdminRole(admin.email, ["finance"]);
+  if (!allowed) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
@@ -86,6 +96,9 @@ export async function PATCH(request: Request) {
 export async function DELETE(request: Request) {
   const admin = await getAdminFromRequest(request);
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const allowed = await requireAdminRole(admin.email, ["finance"]);
+  if (!allowed) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");

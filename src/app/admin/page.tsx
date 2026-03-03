@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   MessageSquare,
@@ -10,6 +11,8 @@ import {
   Shield,
   ImageIcon,
 } from "lucide-react";
+import type { AdminRole } from "@/lib/adminRoles";
+import { canAccessAdminHref } from "@/lib/adminRoles";
 
 const sections = [
   {
@@ -57,6 +60,25 @@ const sections = [
 ];
 
 export default function AdminPage() {
+  const [role, setRole] = useState<AdminRole>(null);
+  const [deniedSection, setDeniedSection] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/admin/me", { credentials: "include" });
+        if (!res.ok) return;
+        const data = await res.json().catch(() => ({}));
+        const r: AdminRole | null =
+          (data.role as AdminRole | undefined) ??
+          (data.is_super_admin ? "super" : null);
+        setRole(r);
+      } catch {
+        // ignore, layout will handle auth redirect
+      }
+    })();
+  }, []);
+
   return (
     <>
       <div className="mb-10">
@@ -68,14 +90,34 @@ export default function AdminPage() {
         </p>
       </div>
 
+      {deniedSection && (
+        <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 text-amber-900 px-4 py-3 text-sm">
+          You don&apos;t have permission to access the {deniedSection} section from your
+          account.
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {sections.map((section) => {
           const Icon = section.icon;
+          const allowed = canAccessAdminHref(role, section.href);
           return (
             <Link
               key={section.href}
               href={section.href}
-              className="group flex flex-col bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-600 hover:shadow-lg transition-all duration-200 overflow-hidden"
+              onClick={(e) => {
+                if (!allowed) {
+                  e.preventDefault();
+                  setDeniedSection(section.title);
+                } else {
+                  setDeniedSection(null);
+                }
+              }}
+              className={`group flex flex-col rounded-xl border transition-all duration-200 overflow-hidden ${
+                allowed
+                  ? "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-600 hover:shadow-lg"
+                  : "bg-gray-100 dark:bg-gray-800/70 border-dashed border-gray-300 dark:border-gray-600 cursor-not-allowed opacity-70"
+              }`}
             >
               <div className={`${section.color} p-4 flex items-center justify-center`}>
                 <Icon className="w-10 h-10 text-white" />
@@ -87,10 +129,16 @@ export default function AdminPage() {
                 <p className="text-sm text-gray-600 dark:text-gray-400 flex-1">
                   {section.description}
                 </p>
-                <span className="inline-flex items-center gap-1 mt-4 text-sm font-medium text-primary-600 dark:text-primary-400 group-hover:gap-2 transition-all">
-                  Open
-                  <ArrowRight className="w-4 h-4" />
-                </span>
+                {allowed ? (
+                  <span className="inline-flex items-center gap-1 mt-4 text-sm font-medium text-primary-600 dark:text-primary-400 group-hover:gap-2 transition-all">
+                    Open
+                    <ArrowRight className="w-4 h-4" />
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 mt-4 text-xs font-medium text-gray-500 dark:text-gray-400">
+                    Permission required
+                  </span>
+                )}
               </div>
             </Link>
           );

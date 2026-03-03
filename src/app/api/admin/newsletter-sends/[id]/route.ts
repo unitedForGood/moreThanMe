@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminFromRequest } from "@/lib/adminAuth";
 import { adminDb } from "@/lib/firebaseAdmin";
+import { requireAdminRole } from "@/lib/adminRoleServer";
 
 function serializeSendDoc(doc: { id: string; data: () => Record<string, unknown> | undefined }) {
   const data = doc.data();
@@ -19,6 +20,9 @@ export async function GET(
 ) {
   const admin = await getAdminFromRequest(request);
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const allowed = await requireAdminRole(admin.email, ["media"]);
+  if (!allowed) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { id } = await params;
   if (!id) return NextResponse.json({ error: "Missing send id" }, { status: 400 });

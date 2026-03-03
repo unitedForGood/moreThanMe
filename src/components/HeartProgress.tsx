@@ -8,6 +8,7 @@ export default function HeartProgress() {
   const [stats, setStats] = useState<DonationStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [animationStarted, setAnimationStarted] = useState(false);
+  const [animatedAmount, setAnimatedAmount] = useState(0);
 
   useEffect(() => {
     fetchStats();
@@ -38,7 +39,29 @@ export default function HeartProgress() {
     }).format(amount);
   };
 
-  const currentAmount = stats?.total_amount || 0;
+  useEffect(() => {
+    if (!stats) return;
+
+    const target = stats.total_amount;
+    let frameId: number;
+    const duration = 1000; // ms
+    const startTime = performance.now();
+
+    const animate = (time: number) => {
+      const elapsed = time - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const value = Math.round(target * progress);
+      setAnimatedAmount(value);
+      if (progress < 1) {
+        frameId = requestAnimationFrame(animate);
+      }
+    };
+
+    frameId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frameId);
+  }, [stats?.total_amount]);
+
+  const currentAmount = animatedAmount || stats?.total_amount || 0;
 
   // Show "Fetching..." until we have finished loading AND a short delay (avoids flashing ₹0)
   const stillFetching = loading || !animationStarted;
