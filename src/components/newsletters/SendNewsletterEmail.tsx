@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Mail, Send, Users, ChevronDown, ChevronUp, FlaskConical, Eye, X } from "lucide-react";
+import { Mail, Send, Users, ChevronDown, ChevronUp, FlaskConical, Eye, X, Search } from "lucide-react";
 import { buildNewsletterEmailHtml } from "@/lib/newsletterEmail";
 
 const TEST_EMAIL = "monu2feb2004@gmail.com";
@@ -24,14 +24,23 @@ interface Volunteer {
   batch?: string;
 }
 
+interface SavedRecipient {
+  id: string;
+  email: string;
+  name?: string | null;
+}
+
 export default function SendNewsletterEmail() {
   const [newsletters, setNewsletters] = useState<Newsletter[]>([]);
   const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
+  const [savedRecipients, setSavedRecipients] = useState<SavedRecipient[]>([]);
   const [selectedNewsletterId, setSelectedNewsletterId] = useState<string>("");
   const [subject, setSubject] = useState("New Newsletter from MoreThanMe");
   const [description, setDescription] = useState("");
   const [newsletterUrl, setNewsletterUrl] = useState("");
   const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
+  const [manualEmail, setManualEmail] = useState("");
+  const [manualEmails, setManualEmails] = useState<string[]>([]);
   const [showUserList, setShowUserList] = useState(false);
   const [loading, setLoading] = useState(false);
   const [testLoading, setTestLoading] = useState(false);
@@ -39,16 +48,21 @@ export default function SendNewsletterEmail() {
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [preview, setPreview] = useState<{ subject: string; html: string } | null>(null);
   const [previewOnly, setPreviewOnly] = useState(false);
+  const [recipientSearch, setRecipientSearch] = useState("");
 
   useEffect(() => {
     Promise.all([
       fetch("/api/admin/newsletters-list", { credentials: "include" }).then((r) => r.json()),
       fetch("/api/admin/volunteers-list", { credentials: "include" }).then((r) => r.json()),
-    ]).then(([newsData, volData]) => {
-      setNewsletters(newsData.newsletters || []);
-      setVolunteers(volData.volunteers || []);
-      setLoadingData(false);
-    }).catch(() => setLoadingData(false));
+      fetch("/api/admin/newsletter-recipients", { credentials: "include" }).then((r) => r.json()).catch(() => ({})),
+    ])
+      .then(([newsData, volData, savedData]) => {
+        setNewsletters(newsData.newsletters || []);
+        setVolunteers(volData.volunteers || []);
+        setSavedRecipients(savedData.recipients || []);
+        setLoadingData(false);
+      })
+      .catch(() => setLoadingData(false));
   }, []);
 
   useEffect(() => {
@@ -67,9 +81,11 @@ export default function SendNewsletterEmail() {
 
   const toggleAll = (checked: boolean) => {
     if (checked) {
-      setSelectedEmails(new Set(volunteers.map((v) => v.university_email)));
+      const volunteerEmails = volunteers.map((v) => v.university_email);
+      const savedEmails = savedRecipients.map((r) => r.email);
+      setSelectedEmails(new Set([...manualEmails, ...volunteerEmails, ...savedEmails]));
     } else {
-      setSelectedEmails(new Set());
+      setSelectedEmails(new Set(manualEmails));
     }
   };
 
@@ -83,6 +99,108 @@ export default function SendNewsletterEmail() {
   const selectedNewsletter = newsletters.find((n) => n.id === selectedNewsletterId);
   const newsletterTitle = selectedNewsletter?.title;
   const newsletterQuote = selectedNewsletter?.quote ?? undefined;
+
+  const totalAvailableRecipients = new Set([
+    ...volunteers.map((v) => v.university_email),
+    ...savedRecipients.map((r) => r.email),
+  ]).size;
+
+  const searchLower = recipientSearch.trim().toLowerCase();
+  const visibleSavedRecipients = searchLower
+    ? savedRecipients.filter((r) => {
+        const email = r.email.toLowerCase();
+        const name = (r.name || "").toLowerCase();
+        return email.includes(searchLower) || name.includes(searchLower);
+      })
+    : savedRecipients;
+  const visibleVolunteers = searchLower
+    ? volunteers.filter((v) => {
+        const name = (v.name || "").toLowerCase();
+        const email = v.university_email.toLowerCase();
+        const course = (v.course || "").toLowerCase();
+        const batch = (v.batch || "").toLowerCase();
+        return (
+          name.includes(searchLower) ||
+          email.includes(searchLower) ||
+          course.includes(searchLower) ||
+          batch.includes(searchLower)
+        );
+      })
+    : volunteers;
+
+  const addManualEmail = () => {
+    const raw = manualEmail.trim();
+    if (!raw) return;
+
+    const parts = raw
+      .split(",")
+      .map((p) => p.trim())
+      .filter(Boolean);
+
+    if (parts.length === 0) return;
+
+    const currentAll = new Set([
+      ...manualEmails,
+      ...volunteers.map((v) => v.university_email),
+      ...savedRecipients.map((r) => r.email),
+    ]);
+
+    const newValid: string[] = [];
+    for (const email of parts) {
+      if (!email.includes("@")) {
+        continue;
+      }
+      if (currentAll.has(email)) {
+        continue;
+      }
+      currentAll.add(email);
+      newValid.push(email);
+    }
+
+    if (newValid.length === 0) {
+      setMessage({
+        type: "error",
+        text: "Enter at least one new valid email (comma separated).",
+      });
+      return;
+    }
+
+    const nextManual = [...manualEmails, ...newValid];
+    setManualEmails(nextManual);
+    const nextSelected = new Set(selectedEmails);
+    newValid.forEach((email) => nextSelected.add(email));
+    setSelectedEmails(nextSelected);
+    setManualEmail("");
+
+    fetch("/api/admin/newsletter-recipients", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ emails: newValid }),
+    })
+      .then((res) => res.json().catch(() => ({})))
+      .then((data) => {
+        if (data && !data.error) {
+          setSavedRecipients((prev) => {
+            const existing = new Set(prev.map((r) => r.email));
+            const added: SavedRecipient[] = newValid
+              .filter((email) => !existing.has(email))
+              .map((email) => ({ id: email, email, name: null }));
+            return [...prev, ...added];
+          });
+        }
+      })
+      .catch(() => {
+        // fail silently; manual emails still used for this send
+      });
+  };
+
+  const removeManualEmail = (email: string) => {
+    setManualEmails((prev) => prev.filter((e) => e !== email));
+    const nextSelected = new Set(selectedEmails);
+    nextSelected.delete(email);
+    setSelectedEmails(nextSelected);
+  };
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -247,6 +365,16 @@ export default function SendNewsletterEmail() {
             <Users className="w-4 h-4" />
             2. Select recipients
           </h4>
+          <div className="relative max-w-sm">
+            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="search"
+              value={recipientSearch}
+              onChange={(e) => setRecipientSearch(e.target.value)}
+              placeholder="Search by name, email, course, batch..."
+              className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+            />
+          </div>
           {volunteers.length === 0 ? (
             <p className="text-sm text-gray-500 dark:text-gray-400">No volunteers with email found.</p>
           ) : (
@@ -267,9 +395,51 @@ export default function SendNewsletterEmail() {
                   Deselect all
                 </button>
                 <span className="text-sm text-gray-500 dark:text-gray-400">
-                  {selectedEmails.size} of {volunteers.length} selected
+                  {selectedEmails.size} of {totalAvailableRecipients} emails selected
                 </span>
               </div>
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                <input
+                  type="email"
+                  value={manualEmail}
+                  onChange={(e) => setManualEmail(e.target.value)}
+                  placeholder="Add external emails (comma separated, not in list)"
+                  className="w-full sm:w-64 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white"
+                />
+                <button
+                  type="button"
+                  onClick={addManualEmail}
+                  disabled={!manualEmail.trim()}
+                  className="px-3 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Add email
+                </button>
+                {manualEmails.length > 0 && (
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    External emails: {manualEmails.length}
+                  </span>
+                )}
+              </div>
+              {manualEmails.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {manualEmails.map((email) => (
+                    <span
+                      key={email}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-xs text-gray-800 dark:text-gray-100"
+                    >
+                      {email}
+                      <button
+                        type="button"
+                        onClick={() => removeManualEmail(email)}
+                        className="p-0.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600"
+                        aria-label={`Remove ${email}`}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
               <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden max-h-64 overflow-y-auto">
                 <button
                   type="button"
@@ -281,7 +451,38 @@ export default function SendNewsletterEmail() {
                 </button>
                 {showUserList && (
                   <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {volunteers.map((v) => (
+                    {visibleSavedRecipients.length > 0 && (
+                      <>
+                        <div className="px-4 py-2 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/60">
+                          Saved external emails ({visibleSavedRecipients.length})
+                        </div>
+                        {visibleSavedRecipients.map((r) => (
+                          <label
+                            key={`saved-${r.id}`}
+                            className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/30 cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedEmails.has(r.email)}
+                              onChange={() => toggleOne(r.email)}
+                              className="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"
+                            />
+                            <span className="text-sm text-gray-900 dark:text-white truncate flex-1">
+                              {r.name || r.email}
+                            </span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">
+                              External
+                            </span>
+                          </label>
+                        ))}
+                        {visibleVolunteers.length > 0 && (
+                          <div className="px-4 py-2 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/60">
+                            Team / volunteers
+                          </div>
+                        )}
+                      </>
+                    )}
+                    {visibleVolunteers.map((v) => (
                       <label
                         key={v.id}
                         className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/30 cursor-pointer"

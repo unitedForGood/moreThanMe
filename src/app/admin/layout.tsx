@@ -17,6 +17,8 @@ import {
   CalendarCheck,
   Receipt,
 } from "lucide-react";
+import type { AdminRole } from "@/lib/adminRoles";
+import { canAccessAdminHref } from "@/lib/adminRoles";
 
 const navItems = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
@@ -40,6 +42,8 @@ export default function AdminLayout({
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [role, setRole] = useState<AdminRole>(null);
+  const [deniedSection, setDeniedSection] = useState<string | null>(null);
 
   const isLoginPage = pathname === "/admin/login";
 
@@ -49,12 +53,17 @@ export default function AdminLayout({
       return;
     }
     fetch("/api/admin/me", { credentials: "include" })
-      .then((res) => {
-        if (res.ok) {
-          setIsAuthorized(true);
-        } else {
+      .then(async (res) => {
+        if (!res.ok) {
           router.replace("/admin/login");
+          return;
         }
+        const data = await res.json().catch(() => ({}));
+        setIsAuthorized(true);
+        const r: AdminRole | null =
+          (data.role as AdminRole | undefined) ??
+          (data.is_super_admin ? "super" : null);
+        setRole(r);
       })
       .catch(() => router.replace("/admin/login"))
       .finally(() => setIsLoading(false));
@@ -83,6 +92,8 @@ export default function AdminLayout({
   if (!isAuthorized) {
     return null;
   }
+
+  const isAllowedCurrent = canAccessAdminHref(role, pathname);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 overflow-x-hidden flex flex-col">
@@ -113,15 +124,28 @@ export default function AdminLayout({
             {navItems.map((item) => {
               const Icon = item.icon;
               const current = pathname === item.href;
+              const allowed = canAccessAdminHref(role, item.href);
+              const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+                if (!allowed) {
+                  e.preventDefault();
+                  setDeniedSection(item.name);
+                  setSidebarOpen(false);
+                  return;
+                }
+                setDeniedSection(null);
+                setSidebarOpen(false);
+              };
               return (
                 <Link
                   key={item.name}
                   href={item.href}
-                  onClick={() => setSidebarOpen(false)}
+                  onClick={handleClick}
                   className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                     current
                       ? "bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-200 font-medium"
-                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      : allowed
+                        ? "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        : "text-gray-400 dark:text-gray-600 cursor-not-allowed"
                   }`}
                 >
                   <Icon className="w-5 h-5 shrink-0" />
@@ -150,8 +174,23 @@ export default function AdminLayout({
       )}
 
       <main className={`flex-1 min-h-0 ${sidebarOpen ? "pl-64" : ""} md:pl-64`}>
-        <div className="p-4 sm:p-6 lg:p-8 pt-16 md:pt-8 max-w-7xl mx-auto">
-          {children}
+        <div className="p-4 sm:p-6 lg:p-8 pt-16 md:pt-8 max-w-7xl mx-auto space-y-4">
+          {!isAllowedCurrent && pathname !== "/admin" && (
+            <div className="rounded-lg border border-amber-300 bg-amber-50 text-amber-900 px-4 py-3 text-sm">
+              <p className="font-semibold">Permission denied</p>
+              <p className="mt-1">
+                You don&apos;t have permission to access the{" "}
+                    {navItems.find((n) => n.href === pathname)?.name ?? "selected"}{" "}
+                    section. Please contact a super admin if you think this is a mistake.
+              </p>
+            </div>
+          )}
+          {deniedSection && isAllowedCurrent && (
+            <div className="rounded-lg border border-amber-300 bg-amber-50 text-amber-900 px-4 py-3 text-sm">
+                  You don&apos;t have permission to access the {deniedSection} section.
+            </div>
+          )}
+          {isAllowedCurrent && children}
         </div>
       </main>
 

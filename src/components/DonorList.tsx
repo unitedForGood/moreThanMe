@@ -75,8 +75,6 @@ export default function DonorList() {
             <tr>
               <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-primary-700 uppercase tracking-wider">#</th>
               <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-primary-700 uppercase tracking-wider">Name</th>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-primary-700 uppercase tracking-wider hidden sm:table-cell">Message</th>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-primary-700 uppercase tracking-wider">Date</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-100">
@@ -93,12 +91,6 @@ export default function DonorList() {
                       {donor.status && <div className="text-xs text-neutral-500">{donor.status}</div>}
                     </div>
                   </div>
-                </td>
-                <td className="px-4 sm:px-6 py-4 text-sm text-neutral-600 max-w-xs truncate hidden sm:table-cell">
-                  {donor.message ? `"${donor.message}"` : "—"}
-                </td>
-                <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-neutral-600">
-                  {formatDate(donor.receipt_date_time ?? donor.receipt_parsed_data?.date_time ?? donor.created_at)}
                 </td>
               </tr>
             ))}

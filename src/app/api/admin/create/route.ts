@@ -1,16 +1,27 @@
 import { NextResponse } from "next/server";
-import { getAdminFromRequest, isSuperAdmin } from "@/lib/adminAuth";
+import { getAdminFromRequest } from "@/lib/adminAuth";
 import { adminDb } from "@/lib/firebaseAdmin";
 import bcrypt from "bcrypt";
+import type { AdminRole } from "@/lib/adminRoles";
+import { requireAdminRole } from "@/lib/adminRoleServer";
 
 export async function POST(request: Request) {
   const admin = await getAdminFromRequest(request);
-  if (!admin || !isSuperAdmin(admin.email)) {
+  if (!admin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const allowed = await requireAdminRole(admin.email, ["super"]);
+  if (!allowed) {
     return NextResponse.json({ error: "Forbidden. Super admin only." }, { status: 403 });
   }
 
   const body = await request.json();
-  const { email, password } = body;
+  const { email, password, role } = body as {
+    email?: unknown;
+    password?: unknown;
+    role?: unknown;
+  };
   if (!email || !password || typeof email !== "string" || typeof password !== "string") {
     return NextResponse.json({ error: "Email and password required" }, { status: 400 });
   }
@@ -24,6 +35,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 });
   }
 
+  let adminRole: AdminRole | null = null;
+  if (typeof role === "string" && ["finance", "events", "media", "super"].includes(role)) {
+    adminRole = role as AdminRole;
+  }
+
   const password_hash = await bcrypt.hash(password, 10);
 
   const existing = await adminDb.collection("admin_users").where("email", "==", emailLower).limit(1).get();
@@ -35,6 +51,7 @@ export async function POST(request: Request) {
     email: emailLower,
     password_hash,
     created_at: new Date(),
+    role: adminRole,
   });
   const doc = await ref.get();
   const d = doc.data()!;

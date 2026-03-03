@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server";
-import { getAdminFromRequest, isSuperAdmin } from "@/lib/adminAuth";
+import { getAdminFromRequest } from "@/lib/adminAuth";
 import { adminDb } from "@/lib/firebaseAdmin";
 import bcrypt from "bcrypt";
+import { requireAdminRole } from "@/lib/adminRoleServer";
 
 export async function PATCH(request: Request) {
   const admin = await getAdminFromRequest(request);
-  if (!admin || !isSuperAdmin(admin.email)) {
+  if (!admin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const allowed = await requireAdminRole(admin.email, ["super"]);
+  if (!allowed) {
     return NextResponse.json({ error: "Forbidden. Super admin only." }, { status: 403 });
   }
 

@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { getAdminFromRequest } from "@/lib/adminAuth";
 import { adminDb } from "@/lib/firebaseAdmin";
+import { requireAdminRole } from "@/lib/adminRoleServer";
 
 export async function GET(request: Request) {
   const admin = await getAdminFromRequest(request);
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const allowed = await requireAdminRole(admin.email, ["events"]);
+  if (!allowed) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const snap = await adminDb.collection("works").orderBy("date", "desc").get();
   const data = snap.docs.map((d) => {
@@ -26,6 +30,9 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const admin = await getAdminFromRequest(request);
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const allowed = await requireAdminRole(admin.email, ["events"]);
+  if (!allowed) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const body = await request.json().catch(() => ({}));
   const { title, date, image_url, media, location, description, sort_order } = body;
@@ -75,6 +82,9 @@ export async function PATCH(request: Request) {
   const admin = await getAdminFromRequest(request);
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const allowed = await requireAdminRole(admin.email, ["events"]);
+  if (!allowed) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
@@ -120,6 +130,9 @@ export async function PATCH(request: Request) {
 export async function DELETE(request: Request) {
   const admin = await getAdminFromRequest(request);
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const allowed = await requireAdminRole(admin.email, ["events"]);
+  if (!allowed) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
