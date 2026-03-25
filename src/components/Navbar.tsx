@@ -19,16 +19,16 @@ export default function Navbar() {
   useEffect(() => {
     const todaySpecialDay = getTodaySpecialDay();
     setSpecialDay(todaySpecialDay);
-    
+
     // Add class to body for padding adjustment
     if (todaySpecialDay) {
-      document.body.classList.add('special-day-navbar');
+      document.body.classList.add("special-day-navbar");
     } else {
-      document.body.classList.remove('special-day-navbar');
+      document.body.classList.remove("special-day-navbar");
     }
-    
+
     return () => {
-      document.body.classList.remove('special-day-navbar');
+      document.body.classList.remove("special-day-navbar");
     };
   }, []);
 
@@ -193,16 +193,16 @@ export default function Navbar() {
             onClick={handleDonate}
             className="px-6 py-2 rounded-lg font-semibold transition-colors duration-200 focus:outline-none focus-visible:outline-none text-white"
             style={{
-              backgroundColor: specialDay ? specialDay.colors.accent : '#A51C30',
+              backgroundColor: specialDay ? specialDay.colors.accent : "#A51C30",
             }}
             onMouseEnter={(e) => {
               if (specialDay) {
-                e.currentTarget.style.opacity = '0.9';
+                e.currentTarget.style.opacity = "0.9";
               }
             }}
             onMouseLeave={(e) => {
               if (specialDay) {
-                e.currentTarget.style.opacity = '1';
+                e.currentTarget.style.opacity = "1";
               }
             }}
           >
@@ -286,6 +286,7 @@ export default function Navbar() {
               {link.label}
             </Link>
           ))}
+
           <Button
             onClick={() => {
               setMenuOpen(false);

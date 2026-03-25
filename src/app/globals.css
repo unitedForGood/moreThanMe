@@ -24,8 +24,18 @@ body.special-day-navbar main {
   padding-top: 7rem;
 }
 
+/* Home page hero already includes its own top spacing (pt-28/pt-32),
+   so undo the extra main padding to avoid a large visual gap. */
+body.special-day-navbar .hero-section {
+  margin-top: -7.25rem;
+}
+
 @media (min-width: 1024px) {
   body.special-day-navbar main {
-    padding-top: 7.5rem;
+    padding-top: 5.5rem;
+  }
+
+  body.special-day-navbar .hero-section {
+    margin-top: -7.75rem;
   }
 }

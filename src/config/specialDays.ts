@@ -16,17 +16,18 @@ export interface SpecialDay {
 }
 
 export const specialDays: SpecialDay[] = [
+  // 🇮🇳 National Days
   {
     name: "Republic Day",
     message: "Happy Republic Day",
     hindiMessage: "जय हिन्द!",
-    month: 0, // January
+    month: 0,
     date: 26,
     colors: {
-      primary: "#FF9933", // Saffron
-      middle: "#FFFFFF", // White
-      secondary: "#138808", // Green
-      text: "#000080", // Navy Blue
+      primary: "#FF9933",
+      middle: "#FFFFFF",
+      secondary: "#138808",
+      text: "#000080",
       accent: "#000080",
     },
     emoji: "🇮🇳",
@@ -36,13 +37,13 @@ export const specialDays: SpecialDay[] = [
     name: "Independence Day",
     message: "Happy Independence Day",
     hindiMessage: "जय हिन्द!",
-    month: 7, // August
+    month: 7,
     date: 15,
     colors: {
-      primary: "#FF9933", // Saffron
-      middle: "#FFFFFF", // White
-      secondary: "#138808", // Green
-      text: "#000080", // Navy Blue
+      primary: "#FF9933",
+      middle: "#FFFFFF",
+      secondary: "#138808",
+      text: "#000080",
       accent: "#000080",
     },
     emoji: "🇮🇳",
@@ -52,49 +53,138 @@ export const specialDays: SpecialDay[] = [
     name: "Gandhi Jayanti",
     message: "Gandhi Jayanti",
     hindiMessage: "बापू को नमन",
-    month: 9, // October
+    month: 9,
     date: 2,
     colors: {
-      primary: "#FF6B35", // Orange
-      middle: "#F7F7F7", // Light Gray
-      secondary: "#4A90E2", // Blue
-      text: "#2C3E50", // Dark Blue
+      primary: "#FF6B35",
+      middle: "#F7F7F7",
+      secondary: "#4A90E2",
+      text: "#2C3E50",
       accent: "#FF6B35",
     },
     emoji: "🕊️",
-    flowerColors: ["#FF6B35", "#F7F7F7", "#4A90E2"],
+  },
+
+  // 🎓 Education & Social Impact
+  {
+    name: "National Youth Day",
+    message: "Empowering Youth for a Better Future",
+    month: 0,
+    date: 12,
+    colors: {
+      primary: "#1ABC9C",
+      middle: "#A3E4D7",
+      secondary: "#E8F8F5",
+      text: "#0E6251",
+      accent: "#1ABC9C",
+    },
+    emoji: "🚀",
   },
   {
-    name: "Diwali",
-    message: "Happy Diwali",
-    hindiMessage: "दीपावली की शुभकामनाएं",
-    month: 9, // October (can vary, but typically October-November)
-    date: 31, // This is approximate - Diwali date varies each year
+    name: "Teacher's Day",
+    message: "Happy Teacher's Day",
+    hindiMessage: "शिक्षक दिवस की शुभकामनाएं",
+    month: 8,
+    date: 5,
     colors: {
-      primary: "#FFD700", // Gold
-      middle: "#FFA500", // Orange
-      secondary: "#FF6347", // Red
-      text: "#8B4513", // Brown
-      accent: "#FFD700",
+      primary: "#3498DB",
+      middle: "#AED6F1",
+      secondary: "#EBF5FB",
+      text: "#1B4F72",
+      accent: "#3498DB",
     },
-    emoji: "🪔",
-    flowerColors: ["#FFD700", "#FFA500", "#FF6347"],
+    emoji: "📚",
   },
+  {
+    name: "Children's Day",
+    message: "Every Child Deserves Education",
+    hindiMessage: "हर बच्चे को शिक्षा का अधिकार है",
+    month: 10,
+    date: 14,
+    colors: {
+      primary: "#FF9F1C",
+      middle: "#FFD166",
+      secondary: "#FFF3B0",
+      text: "#7B3F00",
+      accent: "#FF9F1C",
+    },
+    emoji: "🧒",
+  },
+
+  // 🌍 Awareness Days
+  {
+    name: "National Science Day",
+    message: "Celebrate Innovation & Science",
+    month: 1,
+    date: 28,
+    colors: {
+      primary: "#2E86C1",
+      middle: "#AED6F1",
+      secondary: "#EBF5FB",
+      text: "#1B4F72",
+      accent: "#2E86C1",
+    },
+    emoji: "🔬",
+  },
+  {
+    name: "World Environment Day",
+    message: "Save Environment, Save Future 🌱",
+    month: 5,
+    date: 5,
+    colors: {
+      primary: "#27AE60",
+      middle: "#ABEBC6",
+      secondary: "#EAFAF1",
+      text: "#145A32",
+      accent: "#27AE60",
+    },
+    emoji: "🌱",
+  },
+  {
+    name: "International Literacy Day",
+    message: "Literacy for All",
+    month: 8,
+    date: 8,
+    colors: {
+      primary: "#8E44AD",
+      middle: "#D2B4DE",
+      secondary: "#F5EEF8",
+      text: "#4A235A",
+      accent: "#8E44AD",
+    },
+    emoji: "📖",
+  },
+
+  // 🎨 Major Festivals (limited & meaningful)
   {
     name: "Holi",
-    message: "Happy Holi",
-    hindiMessage: "होली की शुभकामनाएं",
-    month: 2, // March (can vary)
-    date: 25, // This is approximate - Holi date varies each year
+    message: "Celebrate Joy & Unity",
+    hindiMessage: "रंगों का त्योहार मुबारक",
+    month: 2,
+    date: 3, // 2026
     colors: {
-      primary: "#FF1493", // Pink
-      middle: "#00FF00", // Green
-      secondary: "#0000FF", // Blue
-      text: "#4B0082", // Indigo
+      primary: "#FF1493",
+      middle: "#00FF00",
+      secondary: "#0000FF",
+      text: "#4B0082",
       accent: "#FF1493",
     },
     emoji: "🎨",
-    flowerColors: ["#FF1493", "#00FF00", "#0000FF", "#FFFF00"],
+  },
+  {
+    name: "Diwali",
+    message: "Light Over Darkness",
+    hindiMessage: "दीपावली की शुभकामनाएं",
+    month: 10,
+    date: 8, // 2026
+    colors: {
+      primary: "#FFD700",
+      middle: "#FFA500",
+      secondary: "#FF6347",
+      text: "#8B4513",
+      accent: "#FFD700",
+    },
+    emoji: "🪔",
   },
 ];
 
