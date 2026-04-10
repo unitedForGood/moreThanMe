@@ -34,13 +34,30 @@ export async function POST(request: Request) {
       );
     }
 
-    // Don't allow marking dates in the past
-    const dateObj = new Date(date + "T00:00:00");
+    // Don't allow marking dates in the past.
+    // Today's date remains available until 6:00 PM local time.
+    const [year, month, day] = date.split("-").map(Number);
+    const dateObj = new Date(year, month - 1, day);
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (dateObj < today) {
+    const startOfToday = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    );
+    const isToday =
+      dateObj.getFullYear() === today.getFullYear() &&
+      dateObj.getMonth() === today.getMonth() &&
+      dateObj.getDate() === today.getDate();
+    const isTodayBeforeCutoff = isToday && today.getHours() < 18;
+
+    if (dateObj < startOfToday || (isToday && !isTodayBeforeCutoff)) {
       return NextResponse.json(
-        { error: "Cannot mark availability for past dates" },
+        {
+          error:
+            isToday && !isTodayBeforeCutoff
+              ? "Today's availability closes at 6:00 PM"
+              : "Cannot mark availability for past dates",
+        },
         { status: 400 }
       );
     }

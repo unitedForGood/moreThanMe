@@ -38,6 +38,28 @@ function formatDateStr(year: number, month: number, day: number): string {
   return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
+function isTodayBeforeCutoff(dateStr: string, cutoffHour = 18): boolean {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const now = new Date();
+  return (
+    year === now.getFullYear() &&
+    month === now.getMonth() + 1 &&
+    day === now.getDate() &&
+    now.getHours() < cutoffHour
+  );
+}
+
+function canSelectAvailability(dateStr: string): boolean {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const now = new Date();
+  const candidate = new Date(year, month - 1, day);
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  if (candidate < today) return false;
+  if (candidate.getTime() === today.getTime()) return now.getHours() < 18;
+  return true;
+}
+
 export default function VolunteerAvailabilityPage() {
   const today = new Date();
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
@@ -145,6 +167,8 @@ export default function VolunteerAvailabilityPage() {
 
   // Ask for confirmation before changing availability on any date
   const handleDateClick = async (dateStr: string) => {
+    if (!canSelectAvailability(dateStr)) return;
+
     const current = availMap[dateStr];
     const isCurrentlyAvailable = current?.isAvailable || false;
     setPendingDate(dateStr);
@@ -374,6 +398,8 @@ export default function VolunteerAvailabilityPage() {
                 dayOfWeek === 0 || dayOfWeek === 5 || dayOfWeek === 6;
               const isToday = dateStr === todayStr;
               const isPast = dateObj < new Date(todayStr);
+              const isTodayLocked = isToday && !isTodayBeforeCutoff(dateStr);
+              const isSelectable = canSelectAvailability(dateStr);
               const isAvail = availMap[dateStr]?.isAvailable || false;
               const isSaving = saving === dateStr;
               const updatedAt = availMap[dateStr]?.updatedAt;
@@ -381,11 +407,13 @@ export default function VolunteerAvailabilityPage() {
               return (
                 <button
                   key={day}
-                  onClick={() => !isPast && handleDateClick(dateStr)}
-                  disabled={isPast || isSaving}
+                  onClick={() => isSelectable && handleDateClick(dateStr)}
+                  disabled={!isSelectable || isSaving}
                   title={
                     isPast
                       ? "Past date"
+                      : isTodayLocked
+                        ? "Selection for today closes at 6:00 PM"
                       : isAvail
                         ? `Available${updatedAt ? ` · Updated ${new Date(updatedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}` : ""}`
                         : "Click to mark available"
@@ -394,11 +422,11 @@ export default function VolunteerAvailabilityPage() {
                     aspect-square flex flex-col items-center justify-center gap-0.5 relative
                     border-b border-r border-gray-50 dark:border-gray-700/50
                     transition-all duration-150 group
-                    ${isPast ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:scale-[1.02]"}
+                    ${!isSelectable ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:scale-[1.02]"}
                     ${isToday ? "ring-2 ring-inset ring-primary-400 dark:ring-primary-500" : ""}
                     ${isAvail ? "bg-green-50 dark:bg-green-900/20" : isWeekend ? "bg-blue-50/50 dark:bg-blue-900/10" : "bg-white dark:bg-gray-800"}
-                    ${!isPast && !isAvail ? "hover:bg-green-50/50 dark:hover:bg-green-900/10" : ""}
-                    ${!isPast && isAvail ? "hover:bg-green-100 dark:hover:bg-green-900/30" : ""}
+                    ${isSelectable && !isAvail ? "hover:bg-green-50/50 dark:hover:bg-green-900/10" : ""}
+                    ${isSelectable && isAvail ? "hover:bg-green-100 dark:hover:bg-green-900/30" : ""}
                   `}
                 >
                   <span
@@ -422,7 +450,7 @@ export default function VolunteerAvailabilityPage() {
                   )}
 
                   {/* Weekend indicator */}
-                  {isWeekend && !isPast && (
+                  {isWeekend && isSelectable && (
                     <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-blue-400 dark:bg-blue-500 opacity-60" />
                   )}
                 </button>
