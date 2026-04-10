@@ -116,16 +116,28 @@ export async function GET(request: Request) {
       .get();
 
     const records = snap.docs
-      .map((d) => ({
-        id: d.id,
-        ...d.data(),
-        updatedAt: d.data().updatedAt?.toDate?.()
-          ? d.data().updatedAt.toDate().toISOString()
-          : d.data().updatedAt,
-        createdAt: d.data().createdAt?.toDate?.()
-          ? d.data().createdAt.toDate().toISOString()
-          : d.data().createdAt,
-      }))
+      .map((d) => {
+        const data = d.data() as {
+          date?: string;
+          updatedAt?: unknown;
+          createdAt?: unknown;
+          [key: string]: unknown;
+        };
+
+        return {
+          id: d.id,
+          ...data,
+          updatedAt:
+            // Firestore timestamp values expose toDate()
+            (data.updatedAt as { toDate?: () => Date })?.toDate?.()
+              ? (data.updatedAt as { toDate: () => Date }).toDate().toISOString()
+              : data.updatedAt,
+          createdAt:
+            (data.createdAt as { toDate?: () => Date })?.toDate?.()
+              ? (data.createdAt as { toDate: () => Date }).toDate().toISOString()
+              : data.createdAt,
+        };
+      })
       .filter((record) => String(record.date || "").startsWith(`${month}-`));
 
     return NextResponse.json({ records });
