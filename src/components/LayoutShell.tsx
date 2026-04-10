@@ -8,8 +8,9 @@ import RepublicDayFlowers from "./RepublicDayFlowers";
 export default function LayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith("/admin");
+  const isVolunteer = pathname?.startsWith("/volunteer");
 
-  if (isAdmin) {
+  if (isAdmin || isVolunteer) {
     return <>{children}</>;
   }
 

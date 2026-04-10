@@ -1,0 +1,139 @@
+import { NextResponse } from "next/server";
+import { adminDb } from "@/lib/firebaseAdmin";
+import { getVolunteerFromRequest } from "@/lib/volunteerAuth";
+
+/**
+ * POST /api/volunteer/availability
+ * Body: { date: "YYYY-MM-DD", isAvailable: boolean, reason?: string }
+ *
+ * Mark or update volunteer availability for a specific date.
+ * Constraint: if changing from available→not available, reason is REQUIRED.
+ */
+export async function POST(request: Request) {
+  try {
+    const volunteer = await getVolunteerFromRequest(request);
+    if (!volunteer) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json().catch(() => ({}));
+    const { date, isAvailable, reason } = body;
+
+    // Validate date format
+    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return NextResponse.json(
+        { error: "Valid date in YYYY-MM-DD format is required" },
+        { status: 400 }
+      );
+    }
+
+    if (typeof isAvailable !== "boolean") {
+      return NextResponse.json(
+        { error: "isAvailable must be a boolean" },
+        { status: 400 }
+      );
+    }
+
+    // Don't allow marking dates in the past
+    const dateObj = new Date(date + "T00:00:00");
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (dateObj < today) {
+      return NextResponse.json(
+        { error: "Cannot mark availability for past dates" },
+        { status: 400 }
+      );
+    }
+
+    // Compound document ID: memberId_YYYY-MM-DD
+    const docId = `${volunteer.memberId}_${date}`;
+    const docRef = adminDb.collection("availability").doc(docId);
+    const existingDoc = await docRef.get();
+
+    // Constraint: if switching from available → not available, reason is required
+    if (existingDoc.exists) {
+      const existingData = existingDoc.data();
+      if (existingData?.isAvailable === true && isAvailable === false) {
+        if (!reason || !String(reason).trim()) {
+          return NextResponse.json(
+            {
+              error:
+                "Reason is required when changing from available to not available",
+            },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
+    const now = new Date();
+    const payload = {
+      memberId: volunteer.memberId,
+      date,
+      isAvailable,
+      reason: isAvailable ? null : reason ? String(reason).trim() : null,
+      updatedAt: now,
+      ...(existingDoc.exists ? {} : { createdAt: now }),
+    };
+
+    await docRef.set(payload, { merge: true });
+
+    return NextResponse.json({ ok: true, availability: payload });
+  } catch (e) {
+    console.error("Availability POST error:", e);
+    return NextResponse.json(
+      { error: "Failed to update availability" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * GET /api/volunteer/availability?month=2026-04
+ *
+ * Get current volunteer's availability records for a given month.
+ */
+export async function GET(request: Request) {
+  try {
+    const volunteer = await getVolunteerFromRequest(request);
+    if (!volunteer) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const month = searchParams.get("month"); // e.g., "2026-04"
+
+    if (!month || !/^\d{4}-\d{2}$/.test(month)) {
+      return NextResponse.json(
+        { error: "month query parameter required (YYYY-MM)" },
+        { status: 400 }
+      );
+    }
+
+    const snap = await adminDb
+      .collection("availability")
+      .where("memberId", "==", volunteer.memberId)
+      .get();
+
+    const records = snap.docs
+      .map((d) => ({
+        id: d.id,
+        ...d.data(),
+        updatedAt: d.data().updatedAt?.toDate?.()
+          ? d.data().updatedAt.toDate().toISOString()
+          : d.data().updatedAt,
+        createdAt: d.data().createdAt?.toDate?.()
+          ? d.data().createdAt.toDate().toISOString()
+          : d.data().createdAt,
+      }))
+      .filter((record) => String(record.date || "").startsWith(`${month}-`));
+
+    return NextResponse.json({ records });
+  } catch (e) {
+    console.error("Availability GET error:", e);
+    return NextResponse.json(
+      { error: "Failed to fetch availability" },
+      { status: 500 }
+    );
+  }
+}
