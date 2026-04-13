@@ -1,3 +1,6 @@
+import tsParser from "@typescript-eslint/parser";
+import tsPlugin from "@typescript-eslint/eslint-plugin";
+
 /** @type {import("eslint").Linter.Config[]} */
 const eslintConfig = [
   {
@@ -6,15 +9,24 @@ const eslintConfig = [
       "node_modules/**",
       "dist/**",
       "build/**",
-      ".next/*",
-      "**/node_modules/**",
     ],
   },
   {
-    files: ["**/*.js", "**/*.mjs", "**/*.ts", "**/*.tsx"],
+    files: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        ecmaFeatures: { jsx: true },
+        ecmaVersion: "latest",
+        sourceType: "module",
+      },
+    },
+    plugins: {
+      "@typescript-eslint": tsPlugin,
+    },
     rules: {
-      "no-unused-vars": "warn",
-      "no-console": "off",
+      "no-unused-vars": "off",
+      "@typescript-eslint/no-unused-vars": "warn",
     },
   },
 ];
