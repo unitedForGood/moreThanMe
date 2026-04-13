@@ -2,65 +2,40 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Mail, KeyRound, ArrowRight, Loader2, Heart } from "lucide-react";
+import { Mail, Lock, ArrowRight, Loader2, Heart, Eye, EyeOff } from "lucide-react";
 
 export default function VolunteerLoginPage() {
   const router = useRouter();
-  const [step, setStep] = useState<"email" | "otp">("email");
   const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  const handleSendOtp = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
-      const res = await fetch("/api/volunteer/auth/send-otp", {
+      const res = await fetch("/api/volunteer/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim() }),
+        body: JSON.stringify({
+          email: email.trim(),
+          password: password,
+        }),
       });
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Failed to send OTP");
-        return;
-      }
-
-      setSuccessMsg("Check your email for the login code!");
-      setStep("otp");
-    } catch {
-      setError("Something went wrong. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-
-    try {
-      const res = await fetch("/api/volunteer/auth/verify-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), otp: otp.trim() }),
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || "Invalid OTP");
+        setError(data.error || "Login failed");
         return;
       }
 
       router.push("/volunteer/availability");
     } catch {
-      setError("Verification failed. Please try again.");
+      setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -84,131 +59,96 @@ export default function VolunteerLoginPage() {
             Volunteer Portal
           </h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
-            MoreThanMe · Mark your availability
+            MoreThanMe · Sign in to your account
           </p>
         </div>
 
         {/* Card */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl shadow-gray-200/50 dark:shadow-gray-900/50 border border-gray-100 dark:border-gray-700 p-8">
-          {step === "email" ? (
-            <form onSubmit={handleSendOtp} className="space-y-5">
-              <div>
-                <label
-                  htmlFor="volunteer-email"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                >
-                  Email Address
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    id="volunteer-email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="your.email@example.com"
-                    required
-                    autoFocus
-                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-sm"
-                  />
-                </div>
-                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                  Use the same email you registered with on Join Us
-                </p>
+          <form onSubmit={handleLogin} className="space-y-5">
+            {/* Email */}
+            <div>
+              <label
+                htmlFor="volunteer-email"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
+                Email Address
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  id="volunteer-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="your.email@example.com"
+                  required
+                  autoFocus
+                  autoComplete="email"
+                  className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-sm"
+                />
               </div>
+            </div>
 
-              {error && (
-                <div className="rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-300">
-                  {error}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={loading || !email.trim()}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-primary-600 text-white font-semibold hover:bg-primary-700 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm shadow-lg shadow-primary-600/25"
+            {/* Password */}
+            <div>
+              <label
+                htmlFor="volunteer-password"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
               >
-                {loading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <>
-                    Send Login Code
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
-            </form>
-          ) : (
-            <form onSubmit={handleVerifyOtp} className="space-y-5">
-              {successMsg && (
-                <div className="rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 px-4 py-3 text-sm text-green-700 dark:text-green-300">
-                  {successMsg}
-                </div>
-              )}
-
-              <div>
-                <label
-                  htmlFor="volunteer-otp"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  id="volunteer-password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  required
+                  autoComplete="current-password"
+                  className="w-full pl-11 pr-11 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  Enter 6-digit Code
-                </label>
-                <div className="relative">
-                  <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    id="volunteer-otp"
-                    type="text"
-                    value={otp}
-                    onChange={(e) =>
-                      setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
-                    }
-                    placeholder="000000"
-                    required
-                    autoFocus
-                    maxLength={6}
-                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-sm tracking-[0.3em] text-center font-semibold text-lg"
-                  />
-                </div>
-                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                  Sent to <strong>{email}</strong>
-                </p>
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
               </div>
+              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                Your initial password is your email address
+              </p>
+            </div>
 
-              {error && (
-                <div className="rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-300">
-                  {error}
-                </div>
+            {error && (
+              <div className="rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-300">
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading || !email.trim() || !password}
+              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-primary-600 text-white font-semibold hover:bg-primary-700 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm shadow-lg shadow-primary-600/25"
+            >
+              {loading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <>
+                  Sign In
+                  <ArrowRight className="w-4 h-4" />
+                </>
               )}
-
-              <button
-                type="submit"
-                disabled={loading || otp.length !== 6}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-primary-600 text-white font-semibold hover:bg-primary-700 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm shadow-lg shadow-primary-600/25"
-              >
-                {loading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <>
-                    Verify & Sign In
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setStep("email");
-                  setOtp("");
-                  setError(null);
-                  setSuccessMsg(null);
-                }}
-                className="w-full text-sm text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
-              >
-                ← Use a different email
-              </button>
-            </form>
-          )}
+            </button>
+          </form>
         </div>
 
         {/* Footer */}

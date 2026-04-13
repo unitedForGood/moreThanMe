@@ -28,6 +28,8 @@ export async function GET(request: Request) {
         is_founding_member: member.is_founding_member,
         is_core_member: member.is_core_member,
         image_url: member.image_url,
+        why_join: member.why_join,
+        has_default_password: member.has_default_password,
       },
     });
   } catch {

@@ -14,6 +14,8 @@ export interface VolunteerProfile {
   is_founding_member: boolean;
   is_core_member: boolean;
   image_url: string | null;
+  why_join: string | null;
+  has_default_password: boolean;
 }
 
 /**
@@ -86,6 +88,8 @@ function mapDocToProfile(
     is_founding_member: !!d.is_founding_member,
     is_core_member: !!d.is_core_member,
     image_url: d.image_url || null,
+    why_join: d.why_join || null,
+    has_default_password: !d.password_hash || !!d.has_default_password,
   };
 }
 

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { LogOut, Loader2 } from "lucide-react";
+import { LogOut, Loader2, CalendarDays, User, Shield } from "lucide-react";
 
 interface VolunteerInfo {
   name: string;
@@ -12,6 +12,7 @@ interface VolunteerInfo {
   role: string;
   is_founding_member: boolean;
   is_core_member: boolean;
+  has_default_password: boolean;
 }
 
 export default function VolunteerLayout({
@@ -77,6 +78,19 @@ export default function VolunteerLayout({
       ? "Core"
       : volunteer?.role || "Volunteer";
 
+  const navLinks = [
+    {
+      href: "/volunteer/availability",
+      label: "Availability",
+      icon: CalendarDays,
+    },
+    {
+      href: "/volunteer/profile",
+      label: "Profile",
+      icon: User,
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
       {/* Top Navigation Bar */}
@@ -106,7 +120,26 @@ export default function VolunteerLayout({
               </div>
             </Link>
 
-            <div />
+            {/* Center — Navigation Links */}
+            <nav className="flex items-center gap-1">
+              {navLinks.map((link) => {
+                const isActive = pathname === link.href;
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      isActive
+                        ? "bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300"
+                        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white"
+                    }`}
+                  >
+                    <link.icon className="w-4 h-4" />
+                    <span className="hidden sm:inline">{link.label}</span>
+                  </Link>
+                );
+              })}
+            </nav>
 
             {/* Right — Profile + Logout */}
             <div className="flex items-center gap-3">
@@ -130,6 +163,26 @@ export default function VolunteerLayout({
           </div>
         </div>
       </header>
+
+      {/* Default Password Banner */}
+      {volunteer?.has_default_password && pathname !== "/volunteer/profile" && (
+        <div className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-sm text-amber-800 dark:text-amber-200">
+              <Shield className="w-4 h-4 flex-shrink-0" />
+              <span>
+                You&apos;re using the default password.{" "}
+                <Link
+                  href="/volunteer/profile"
+                  className="font-semibold underline hover:text-amber-900 dark:hover:text-amber-100 transition-colors"
+                >
+                  Update it now →
+                </Link>
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main content */}
       <main className="flex-1">
