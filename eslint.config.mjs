@@ -31,4 +31,5 @@ const eslintConfig = [
   },
 ];
 
+// Trigger fresh build with authorized author
 export default eslintConfig;
