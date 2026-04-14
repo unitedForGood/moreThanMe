@@ -31,5 +31,5 @@ const eslintConfig = [
   },
 ];
 
-// Trigger fresh build with authorized author
+// Push with Akash's identity to verify public repo deployment
 export default eslintConfig;
