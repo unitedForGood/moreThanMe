@@ -17,10 +17,11 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { email, password, role } = body as {
+  const { email, password, role, roles } = body as {
     email?: unknown;
     password?: unknown;
     role?: unknown;
+    roles?: unknown;
   };
   if (!email || !password || typeof email !== "string" || typeof password !== "string") {
     return NextResponse.json({ error: "Email and password required" }, { status: 400 });
@@ -35,9 +36,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 });
   }
 
-  let adminRole: AdminRole | null = null;
-  if (typeof role === "string" && ["finance", "events", "media", "super"].includes(role)) {
-    adminRole = role as AdminRole;
+  let adminRole: AdminRole | AdminRole[] = null;
+  const validRoles = ["finance", "events", "media", "super"];
+  
+  if (Array.isArray(roles)) {
+    adminRole = roles.filter(r => validRoles.includes(r)) as AdminRole[];
+  } else if (typeof role === "string" && validRoles.includes(role)) {
+    adminRole = [role as AdminRole];
   }
 
   const password_hash = await bcrypt.hash(password, 10);

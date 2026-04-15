@@ -3,13 +3,15 @@
 import { useState, useEffect } from "react";
 import { Shield, Plus, Key, Trash2, X } from "lucide-react";
 import type { AdminRole } from "@/lib/adminRoles";
-import { getAdminRoleLabel } from "@/lib/adminRoles";
+import { getAdminRoleLabels } from "@/lib/adminRoles";
+
+const ROLE_OPTIONS: Exclude<AdminRole, null>[] = ["super", "finance", "events", "media"];
 
 interface Admin {
   id: string;
   email: string;
   created_at?: string;
-  role?: AdminRole;
+  role?: AdminRole | AdminRole[];
 }
 
 export default function AdminAdminsPage() {
@@ -24,7 +26,7 @@ export default function AdminAdminsPage() {
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [updatePassword, setUpdatePassword] = useState("");
-  const [newRole, setNewRole] = useState<AdminRole>("finance");
+  const [newRoles, setNewRoles] = useState<AdminRole[]>(["finance"]);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -59,7 +61,7 @@ export default function AdminAdminsPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email: newEmail.trim(), password: newPassword, role: newRole }),
+        body: JSON.stringify({ email: newEmail.trim(), password: newPassword, roles: newRoles }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -70,7 +72,7 @@ export default function AdminAdminsPage() {
       setShowAddForm(false);
       setNewEmail("");
       setNewPassword("");
-      setNewRole("finance");
+      setNewRoles(["finance"]);
       await fetchAdmins();
     } catch {
       setMessage({ type: "error", text: "Request failed" });
@@ -131,7 +133,7 @@ export default function AdminAdminsPage() {
 
   const formatDate = (d: string) => new Date(d).toLocaleDateString("en-IN", { year: "numeric", month: "short", day: "numeric" });
 
-  const handleUpdateRole = async (id: string, role: AdminRole | null) => {
+  const handleUpdateRole = async (id: string, roles: AdminRole[]) => {
     setSubmitting(true);
     setMessage(null);
     try {
@@ -139,7 +141,7 @@ export default function AdminAdminsPage() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ id, role }),
+        body: JSON.stringify({ id, roles }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -233,17 +235,30 @@ export default function AdminAdminsPage() {
               minLength={6}
               className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
-            <select
-              value={newRole ?? ""}
-              onChange={(e) => setNewRole((e.target.value || null) as AdminRole)}
-              className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            >
-              <option value="">Select role (optional)</option>
-              <option value="super">Super admin (full access)</option>
-              <option value="finance">Finance</option>
-              <option value="events">Events</option>
-              <option value="media">Media</option>
-            </select>
+            <div className="sm:col-span-1">
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 uppercase">Roles</label>
+              <div className="grid grid-cols-2 gap-2">
+                {ROLE_OPTIONS.map((r) => (
+                  <label key={r} className="flex items-center gap-2 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={newRoles.includes(r)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setNewRoles([...newRoles, r]);
+                        } else {
+                          setNewRoles(newRoles.filter((role) => role !== r));
+                        }
+                      }}
+                      className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-primary-600 capitalize">
+                      {r}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
           </div>
           <div className="flex gap-2">
             <button type="submit" disabled={submitting} className="px-4 py-2 rounded-lg bg-primary-600 text-white font-medium disabled:opacity-50">
@@ -280,22 +295,34 @@ export default function AdminAdminsPage() {
                           Super Admin
                         </span>
                       ) : (
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-700 dark:text-gray-200 text-sm">
-                            {getAdminRoleLabel(a.role ?? null)}
-                          </span>
-                          <select
-                            value={a.role ?? ""}
-                            onChange={(e) => handleUpdateRole(a.id, (e.target.value || null) as AdminRole | null)}
-                            disabled={submitting}
-                            className="text-xs px-2 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200"
-                          >
-                            <option value="">No role</option>
-                            <option value="super">Super admin</option>
-                            <option value="finance">Finance</option>
-                            <option value="events">Events</option>
-                            <option value="media">Media</option>
-                          </select>
+                        <div className="space-y-2">
+                          <div className="text-gray-700 dark:text-gray-200 text-sm font-medium">
+                            {getAdminRoleLabels(a.role ?? [])}
+                          </div>
+                          <div className="flex flex-wrap gap-x-4 gap-y-2 py-1">
+                            {ROLE_OPTIONS.map((r) => {
+                              const currentRoles = Array.isArray(a.role) ? a.role : a.role ? [a.role] : [];
+                              return (
+                                <label key={r} className="flex items-center gap-2 cursor-pointer group">
+                                  <input
+                                    type="checkbox"
+                                    checked={currentRoles.includes(r)}
+                                    onChange={(e) => {
+                                      const nextRoles = e.target.checked
+                                        ? [...currentRoles, r]
+                                        : currentRoles.filter((role) => role !== r);
+                                      handleUpdateRole(a.id, nextRoles);
+                                    }}
+                                    disabled={submitting}
+                                    className="w-3.5 h-3.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                                  />
+                                  <span className="text-xs text-gray-500 dark:text-gray-400 group-hover:text-primary-600 capitalize">
+                                    {r}
+                                  </span>
+                                </label>
+                              );
+                            })}
+                          </div>
                         </div>
                       )}
                     </td>

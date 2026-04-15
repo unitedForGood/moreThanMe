@@ -16,18 +16,22 @@ export async function PATCH(request: Request) {
   }
 
   const body = await request.json();
-  const { id, role } = body as { id?: unknown; role?: unknown };
+  const { id, role, roles } = body as { id?: unknown; role?: unknown; roles?: unknown };
 
   if (!id || typeof id !== "string") {
     return NextResponse.json({ error: "Admin id required" }, { status: 400 });
   }
 
-  let newRole: AdminRole | null = null;
-  if (typeof role === "string") {
-    if (!["finance", "events", "media", "super"].includes(role)) {
+  let newRoles: AdminRole | AdminRole[] = null;
+  const validRoles = ["finance", "events", "media", "super"];
+
+  if (Array.isArray(roles)) {
+    newRoles = roles.filter(r => validRoles.includes(r)) as AdminRole[];
+  } else if (typeof role === "string") {
+    if (!validRoles.includes(role)) {
       return NextResponse.json({ error: "Invalid role" }, { status: 400 });
     }
-    newRole = role as AdminRole;
+    newRoles = [role as AdminRole];
   }
 
   const doc = await adminDb.collection("admin_users").doc(id).get();
@@ -35,7 +39,7 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Admin not found" }, { status: 404 });
   }
 
-  await adminDb.collection("admin_users").doc(id).update({ role: newRole });
+  await adminDb.collection("admin_users").doc(id).update({ role: newRoles });
   return NextResponse.json({ ok: true });
 }
 

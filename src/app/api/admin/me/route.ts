@@ -28,8 +28,8 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const role: AdminRole = await getRoleForAdminEmail(email);
-    const superAdmin = role === "super";
+    const role: AdminRole | AdminRole[] = await getRoleForAdminEmail(email);
+    const superAdmin = Array.isArray(role) ? role.includes("super") : role === "super";
 
     return NextResponse.json({
       ok: true,

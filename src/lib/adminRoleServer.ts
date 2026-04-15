@@ -1,7 +1,7 @@
 import type { AdminRole } from "./adminRoles";
 import { adminDb } from "./firebaseAdmin";
 
-export async function getRoleForAdminEmail(email: string): Promise<AdminRole> {
+export async function getRoleForAdminEmail(email: string): Promise<AdminRole | AdminRole[]> {
   if (!email) return null;
 
   const snap = await adminDb
@@ -20,10 +20,12 @@ export async function getRoleForAdminEmail(email: string): Promise<AdminRole> {
     return null;
   }
 
-  const data = doc.data() as { role?: AdminRole; email?: string } | undefined;
-  const role = (data?.role as AdminRole | undefined) ?? null;
+  const data = doc.data() as { role?: AdminRole | AdminRole[]; email?: string } | undefined;
+  const role = data?.role ?? null;
 
-  if (role === "super") return "super";
+  // Check if it's "super" even if stored as an array
+  const roles = Array.isArray(role) ? role : [role];
+  if (roles.includes("super")) return "super";
 
   // Also treat any row whose email matches SUPER_ADMIN_EMAIL as super
   const superEmail = process.env.SUPER_ADMIN_EMAIL?.trim().toLowerCase();
@@ -39,10 +41,12 @@ export async function requireAdminRole(
   allowedRoles: AdminRole[]
 ): Promise<boolean> {
   const role = await getRoleForAdminEmail(email);
+  const roles = Array.isArray(role) ? role : [role];
 
-  if (role === "super") return true;
+  if (roles.includes("super")) return true;
 
-  return allowedRoles.includes(role);
+  // Check if any of the user's roles are in the allowedRoles list
+  return roles.some(r => allowedRoles.includes(r as AdminRole));
 }
 
 
