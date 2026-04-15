@@ -88,6 +88,10 @@ export default function HeartProgress() {
             <div className="text-sm text-neutral-500 dark:text-neutral-400">
               Remaining balance from donations
             </div>
+            {/* Hidden placeholder to prevent layout shift when changing states */}
+            <p className="text-lg text-transparent invisible">
+              This is what we still have available to fund upcoming initiatives
+            </p>
           </div>
         </div>
       </div>
