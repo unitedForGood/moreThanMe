@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type { AdminRole } from "@/lib/adminRoles";
 import { canAccessAdminHref } from "@/lib/adminRoles";
+import DashboardAnalytics from "./components/DashboardAnalytics";
 
 const sections = [
   {
@@ -96,6 +97,8 @@ export default function AdminPage() {
           account.
         </div>
       )}
+
+      <DashboardAnalytics role={role} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {sections.map((section) => {

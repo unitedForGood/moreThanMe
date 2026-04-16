@@ -36,6 +36,7 @@ export async function POST(request: Request) {
     batch,
     course,
     why_join,
+    approval_status,
   } = body;
   if (!name || !role) {
     return NextResponse.json({ error: "name and role required" }, { status: 400 });
@@ -54,6 +55,7 @@ export async function POST(request: Request) {
     batch: batch ? String(batch).trim() : null,
     course: course ? String(course).trim() : null,
     why_join: why_join ? String(why_join).trim() : null,
+    approval_status: approval_status ? String(approval_status).trim() : "approved",
     created_at: new Date(),
   });
   const doc = await ref.get();
@@ -85,6 +87,7 @@ export async function PATCH(request: Request) {
   if (body.batch !== undefined) updates.batch = body.batch ? String(body.batch).trim() : null;
   if (body.course !== undefined) updates.course = body.course ? String(body.course).trim() : null;
   if (body.why_join !== undefined) updates.why_join = body.why_join ? String(body.why_join).trim() : null;
+  if (body.approval_status !== undefined) updates.approval_status = String(body.approval_status).trim();
 
   await adminDb.collection("team_members").doc(id).update(updates);
   const doc = await adminDb.collection("team_members").doc(id).get();

@@ -29,8 +29,6 @@ export function getAdminRoleLabel(role: AdminRole): string {
 export function canAccessAdminHref(role: AdminRole | AdminRole[], href: string): boolean {
   if (href === "/admin") return true;
 
-  // Availability is accessible to all admin roles
-  if (href.startsWith("/admin/availability")) return true;
 
   const roles = Array.isArray(role) ? role : [role];
   if (roles.includes("super")) return true;

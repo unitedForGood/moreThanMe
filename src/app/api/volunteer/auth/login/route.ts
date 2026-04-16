@@ -65,6 +65,20 @@ export async function POST(request: Request) {
     }
 
     const data = doc.data();
+    const approvalStatus = data.approval_status;
+
+    if (approvalStatus === "pending") {
+      return NextResponse.json(
+        { error: "Your account is currently pending approval by an admin. We'll be in touch soon!" },
+        { status: 403 }
+      );
+    } else if (approvalStatus === "rejected") {
+      return NextResponse.json(
+        { error: "Your volunteer application was not approved." },
+        { status: 403 }
+      );
+    }
+
     let passwordHash: string = data.password_hash || "";
 
     // Lazy migration: if no password_hash exists yet, the default password

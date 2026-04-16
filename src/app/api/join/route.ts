@@ -43,6 +43,7 @@ export async function POST(request: Request) {
       sort_order: nextSortOrder,
       is_founding_member: false,
       is_core_member: false,
+      approval_status: "pending",
       created_at: new Date(),
     });
 

@@ -31,6 +31,7 @@ interface TeamMember {
   batch?: string | null;
   course?: string | null;
   why_join?: string | null;
+  approval_status?: string | null;
 }
 
 interface Donor {
@@ -41,7 +42,7 @@ interface Donor {
   created_at?: unknown;
 }
 
-type FilterTab = "all" | "founding" | "core" | "volunteers" | "donors" | "our_family";
+type FilterTab = "all" | "pending" | "founding" | "core" | "volunteers" | "donors" | "our_family";
 
 export default function AdminTeamPage() {
   const [team, setTeam] = useState<TeamMember[]>([]);
@@ -62,6 +63,7 @@ export default function AdminTeamPage() {
   const [editBatch, setEditBatch] = useState("");
   const [editCourse, setEditCourse] = useState("");
   const [editWhyJoin, setEditWhyJoin] = useState("");
+  const [editApprovalStatus, setEditApprovalStatus] = useState("approved");
   const [saving, setSaving] = useState(false);
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
@@ -118,6 +120,7 @@ export default function AdminTeamPage() {
     setEditBatch(m.batch || "");
     setEditCourse(m.course || "");
     setEditWhyJoin(m.why_join || "");
+    setEditApprovalStatus(m.approval_status || "approved");
   };
 
   const cancelEdit = () => setEditingId(null);
@@ -145,6 +148,7 @@ export default function AdminTeamPage() {
           batch: editBatch.trim() || null,
           course: editCourse.trim() || null,
           why_join: editWhyJoin.trim() || null,
+          approval_status: editApprovalStatus,
         }),
       });
       if (res.ok) {
@@ -161,6 +165,21 @@ export default function AdminTeamPage() {
     const res = await fetch(`/api/admin/team?id=${id}`, { method: "DELETE", credentials: "include" });
     if (res.ok) await fetchData();
     if (editingId === id) setEditingId(null);
+  };
+
+  const updateApprovalStatus = async (id: string, status: string) => {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/admin/team?id=${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ approval_status: status }),
+      });
+      if (res.ok) await fetchData();
+    } finally {
+      setSaving(false);
+    }
   };
 
   const resolvedNewRole = newRole === "Other" ? newRoleOther.trim() : newRole;
@@ -211,6 +230,8 @@ export default function AdminTeamPage() {
 
   const tabFilteredTeam = (() => {
     switch (filterTab) {
+      case "pending":
+        return team.filter((m) => m.approval_status === "pending");
       case "founding":
         return team.filter((m) => m.is_founding_member);
       case "core":
@@ -279,6 +300,7 @@ export default function AdminTeamPage() {
 
   const counts = {
     all: team.length,
+    pending: team.filter((m) => m.approval_status === "pending").length,
     founding: team.filter((m) => m.is_founding_member).length,
     core: team.filter((m) => m.is_core_member).length,
     volunteers: team.filter((m) => m.role === "Volunteer").length,
@@ -288,6 +310,7 @@ export default function AdminTeamPage() {
 
   const tabs: { key: FilterTab; label: string; count: number }[] = [
     { key: "all", label: "All", count: counts.all },
+    { key: "pending", label: "Pending", count: counts.pending },
     { key: "founding", label: "Founding team", count: counts.founding },
     { key: "core", label: "Core team", count: counts.core },
     { key: "volunteers", label: "Volunteers", count: counts.volunteers },
@@ -532,6 +555,15 @@ export default function AdminTeamPage() {
                       rows={2}
                       className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white min-w-[200px]"
                     />
+                    <select
+                      value={editApprovalStatus}
+                      onChange={(e) => setEditApprovalStatus(e.target.value)}
+                      className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white min-w-[140px]"
+                    >
+                      <option value="approved">Approved</option>
+                      <option value="pending">Pending</option>
+                      <option value="rejected">Rejected</option>
+                    </select>
                   </div>
                   <div className="flex gap-2">
                     <button onClick={saveEdit} disabled={saving || !resolvedEditRole} className="px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 disabled:opacity-50">
@@ -565,6 +597,16 @@ export default function AdminTeamPage() {
                             Core
                           </span>
                         )}
+                        {member.approval_status === "pending" && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 font-medium border border-amber-200 dark:border-amber-800">
+                            Pending Approval
+                          </span>
+                        )}
+                        {member.approval_status === "rejected" && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400 font-medium border border-red-200 dark:border-red-800">
+                            Rejected
+                          </span>
+                        )}
                       </div>
                       <div className="text-sm text-primary-600 dark:text-primary-400">{member.role}</div>
                       {(member.enrollment || member.batch || member.course) && (
@@ -580,7 +622,17 @@ export default function AdminTeamPage() {
                       )}
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 items-center flex-wrap">
+                    {member.approval_status === "pending" && (
+                      <>
+                        <button onClick={() => updateApprovalStatus(member.id, "approved")} className="text-sm px-3 py-1.5 rounded-lg bg-green-500 text-white font-medium hover:bg-green-600 transition-colors">
+                          Approve
+                        </button>
+                        <button onClick={() => updateApprovalStatus(member.id, "rejected")} className="text-sm px-3 py-1.5 rounded-lg border border-red-300 dark:border-red-800 text-red-600 dark:text-red-400 font-medium hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors">
+                          Reject
+                        </button>
+                      </>
+                    )}
                     <button onClick={() => startEdit(member)} className="text-sm text-primary-600 dark:text-primary-400 font-medium hover:underline">
                       Edit
                     </button>
