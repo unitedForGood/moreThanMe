@@ -414,9 +414,9 @@ export default function DonationForm() {
       </div>
 
       {/* Header Section */}
-      <div className="text-center mb-12">
+      <div className="text-center mb-10">
 
-        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6 text-primary-800 leading-tight">
+        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 text-primary-800 leading-tight">
           Choose Your Way to Give
         </h2>
 
@@ -432,14 +432,13 @@ export default function DonationForm() {
           <div className="absolute inset-0 bg-gradient-to-br from-primary-50/50 to-transparent"></div>
 
           <div className="relative z-10">
-            <div className="bg-primary-50 rounded-xl p-3 text-center border border-primary-100/50 mb-6">
-              <p className="text-sm font-medium text-primary-800">
-                Verified account holder will appear as
-              </p>
-              <h3 className="text-lg sm:text-xl font-bold text-primary-900 mt-1">
-                AKASH G (Kotak Bank)
-              </h3>
-            </div>
+            <h3 className="text-2xl sm:text-3xl font-bold mb-2 text-primary-800 text-center">
+              Donate to {payeeDisplayName}
+            </h3>
+
+            <p className="text-sm text-neutral-500 mb-6 text-center">
+              Scan with any UPI app to contribute
+            </p>
 
             {/* QR Code */}
             <div className="flex justify-center mb-6">
@@ -467,6 +466,10 @@ export default function DonationForm() {
                 </div>
               </div>
             </div>
+
+            <p className="text-xs text-neutral-500 text-center mb-5">
+              You are paying: MoreThanMe (Akash ****3722)
+            </p>
 
             {/* Trust Indicators */}
             <div className="flex items-center justify-center gap-5 text-xs text-neutral-500">
