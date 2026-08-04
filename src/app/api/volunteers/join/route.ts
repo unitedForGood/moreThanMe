@@ -1,30 +1,43 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
 
+const DEFAULT_ROLE = "Volunteer";
+
 export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
     const { name, universityEmail, enrollment, batch, course, phone, message } = body;
     if (!name || !universityEmail) {
-      return NextResponse.json({ error: "Name and university email required" }, { status: 400 });
+      return NextResponse.json({ error: "Name and email required" }, { status: 400 });
     }
-    if (!universityEmail.endsWith("rishihood.edu.in")) {
-      return NextResponse.json({ error: "Only Rishihood University emails (@rishihood.edu.in) can sign up." }, { status: 400 });
-    }
+    const emailTrimmed = String(universityEmail).trim().toLowerCase();
+    const nameTrimmed = String(name).trim();
 
-    const existing = await adminDb.collection("volunteers").where("university_email", "==", universityEmail.trim()).limit(1).get();
+    const existing = await adminDb.collection("team_members").where("email", "==", emailTrimmed).limit(1).get();
     if (!existing.empty) {
       return NextResponse.json({ error: "already_registered" }, { status: 409 });
     }
 
-    await adminDb.collection("volunteers").add({
-      name: String(name).trim(),
-      university_email: String(universityEmail).trim(),
-      enrollment: enrollment ? String(enrollment).trim() : "",
-      batch: batch || "2023",
-      course: course || "CSAI",
-      phone: phone ? String(phone).trim() : "",
-      message: message ? String(message).trim() : "",
+    const lastByOrder = await adminDb
+      .collection("team_members")
+      .orderBy("sort_order", "desc")
+      .limit(1)
+      .get();
+    const nextSortOrder = lastByOrder.empty ? 0 : (lastByOrder.docs[0].data().sort_order ?? 0) + 1;
+
+    await adminDb.collection("team_members").add({
+      name: nameTrimmed,
+      email: emailTrimmed,
+      enrollment: enrollment ? String(enrollment).trim() : null,
+      batch: batch || null,
+      course: course || null,
+      phone: phone ? String(phone).trim() : null,
+      why_join: message ? String(message).trim() : null,
+      role: DEFAULT_ROLE,
+      sort_order: nextSortOrder,
+      is_founding_member: false,
+      is_core_member: false,
+      approval_status: "pending",
       created_at: new Date(),
     });
 

@@ -8,6 +8,7 @@ export default function JoinPage() {
   const [form, setForm] = useState({
     name: "",
     email: "",
+    password: "",
     batch: "2023",
     course: "BTECH",
     phone: "",
@@ -32,6 +33,7 @@ export default function JoinPage() {
       body: JSON.stringify({
         name: form.name,
         email: form.email.trim(),
+        password: form.password,
         phone: form.phone.trim() || undefined,
         batch: form.batch,
         course: form.course,
@@ -113,6 +115,26 @@ export default function JoinPage() {
             onChange={handleChange}
             className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
           />
+        </div>
+
+        <div>
+          <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Create a Password <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            required
+            minLength={6}
+            placeholder="At least 6 characters"
+            value={form.password}
+            onChange={handleChange}
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+          />
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            You will use this password to log in to the Volunteer Portal.
+          </p>
         </div>
 
         <div>

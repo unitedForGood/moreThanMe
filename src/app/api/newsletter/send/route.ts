@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminFromRequest } from "@/lib/adminAuth";
-import { sendEmail, getEmailFooter } from "@/lib/brevo";
+import { sendEmail, sendNewsletterCampaign, getEmailFooter } from "@/lib/brevo";
 import { buildNewsletterEmailHtml } from "@/lib/newsletterEmail";
 
 export async function POST(request: Request) {
@@ -45,25 +45,30 @@ export async function POST(request: Request) {
 
   const recipientsList = validEmails.map((email: string) => ({ email, name: undefined }));
 
-  const BATCH_SIZE = 50;
   let sent = 0;
-  for (let i = 0; i < recipientsList.length; i += BATCH_SIZE) {
-    const batch = recipientsList.slice(i, i + BATCH_SIZE);
+
+  if (isTest) {
     const result = await sendEmail({
-      to: batch,
+      to: recipientsList,
       subject: finalSubject,
       htmlContent: finalHtml,
     });
     if (result.error) {
-      return NextResponse.json(
-        { error: result.error, sent: i > 0 ? i : undefined },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: result.error }, { status: 500 });
     }
-    sent += batch.length;
-  }
+    sent = recipientsList.length;
+  } else {
+    // Use Brevo native Campaign & List APIs for broadcast campaigns to eliminate loop/timeout risk
+    const campaignResult = await sendNewsletterCampaign({
+      recipients: recipientsList,
+      subject: finalSubject,
+      htmlContent: finalHtml,
+    });
+    if (campaignResult.error) {
+      return NextResponse.json({ error: campaignResult.error }, { status: 500 });
+    }
+    sent = campaignResult.sent || validEmails.length;
 
-  if (!isTest) {
     try {
       const { adminDb } = await import("@/lib/firebaseAdmin");
       await adminDb.collection("newsletter_sends").add({
@@ -74,6 +79,7 @@ export async function POST(request: Request) {
         recipient_emails: validEmails,
         sent_by: admin.email,
         sent_at: new Date(),
+        brevo_campaign_id: campaignResult.campaignId || null,
       });
     } catch (logErr) {
       console.error("Newsletter send log error:", logErr);

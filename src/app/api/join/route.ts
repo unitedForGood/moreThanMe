@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import bcrypt from "bcrypt";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { sendEmail, wrapEmailContent, EMAIL_BRAND, HANDBOOK_URL } from "@/lib/brevo";
 
@@ -7,11 +8,14 @@ const DEFAULT_ROLE = "Volunteer";
 export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
-    const { name, email, phone, enrollment, batch, course, why_join, image_url } = body;
-    if (!name || !email) {
-      return NextResponse.json({ error: "Name and email are required" }, { status: 400 });
+    const { name, email, password, phone, enrollment, batch, course, why_join, image_url } = body;
+    if (!name || !email || !password) {
+      return NextResponse.json({ error: "Name, email, and password are required" }, { status: 400 });
     }
-    const emailTrimmed = String(email).trim();
+    if (typeof password !== "string" || password.length < 6) {
+      return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 });
+    }
+    const emailTrimmed = String(email).trim().toLowerCase();
     const nameTrimmed = String(name).trim();
 
     const existing = await adminDb
@@ -23,6 +27,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "already_registered" }, { status: 409 });
     }
 
+    const passwordHash = await bcrypt.hash(password, 10);
+
     const lastByOrder = await adminDb
       .collection("team_members")
       .orderBy("sort_order", "desc")
@@ -33,6 +39,8 @@ export async function POST(request: Request) {
     await adminDb.collection("team_members").add({
       name: nameTrimmed,
       email: emailTrimmed,
+      password_hash: passwordHash,
+      has_default_password: false,
       phone: phone ? String(phone).trim() : null,
       enrollment: enrollment ? String(enrollment).trim() : null,
       batch: batch || null,
