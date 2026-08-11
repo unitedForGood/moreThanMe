@@ -16,6 +16,46 @@ interface TeamMember {
 export default function TeamPage() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const copyToClipboard = (e: React.MouseEvent, text: string, label: string, href: string) => {
+    e.preventDefault();
+    
+    const fallbackCopy = (val: string) => {
+      const textArea = document.createElement("textarea");
+      textArea.value = val;
+      textArea.style.position = "fixed";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+      } catch (err) {
+        console.error('Fallback copy failed', err);
+      }
+      document.body.removeChild(textArea);
+    };
+
+    const showToastAndRedirect = () => {
+      setToastMessage(`${label} copied to clipboard!`);
+      setTimeout(() => setToastMessage(null), 3000);
+      setTimeout(() => {
+        window.location.href = href;
+      }, 150);
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToastAndRedirect();
+      }).catch(() => {
+        fallbackCopy(text);
+        showToastAndRedirect();
+      });
+    } else {
+      fallbackCopy(text);
+      showToastAndRedirect();
+    }
+  };
 
   useEffect(() => {
     fetch("/api/team")
@@ -106,21 +146,41 @@ export default function TeamPage() {
                     <p className="text-primary-600 font-medium mb-4">{member.role}</p>
                     <div className="flex justify-center gap-3">
                       {member.email && (
-                        <a href={`mailto:${member.email}`} className="text-neutral-400 hover:text-primary-600 transition-colors" aria-label="Email">
+                        <a 
+                          href={`mailto:${member.email}`} 
+                          onClick={(e) => copyToClipboard(e, member.email || "", "Email address", `mailto:${member.email}`)}
+                          className="text-neutral-400 hover:text-primary-600 transition-colors" 
+                          aria-label="Email"
+                        >
                           <Mail className="w-5 h-5" />
                         </a>
                       )}
                       {member.phone && (
-                        <a href={`tel:${member.phone.replace(/\s/g, "")}`} className="text-neutral-400 hover:text-primary-600 transition-colors" aria-label="Call">
+                        <a 
+                          href={`tel:${member.phone.replace(/\s/g, "")}`} 
+                          onClick={(e) => copyToClipboard(e, member.phone || "", "Phone number", `tel:${member.phone.replace(/\s/g, "")}`)}
+                          className="text-neutral-400 hover:text-primary-600 transition-colors" 
+                          aria-label="Call"
+                        >
                           <Phone className="w-5 h-5" />
                         </a>
                       )}
                       {!member.email && !member.phone && (
                         <>
-                          <a href="mailto:unitedforgood2025@gmail.com" className="text-neutral-400 hover:text-primary-600 transition-colors" aria-label="Email">
+                          <a 
+                            href="mailto:morethanme@rishihood.edu.in" 
+                            onClick={(e) => copyToClipboard(e, "morethanme@rishihood.edu.in", "Email address", "mailto:morethanme@rishihood.edu.in")}
+                            className="text-neutral-400 hover:text-primary-600 transition-colors" 
+                            aria-label="Email"
+                          >
                             <Mail className="w-5 h-5" />
                           </a>
-                          <a href="tel:+917541062514" className="text-neutral-400 hover:text-primary-600 transition-colors" aria-label="Call">
+                          <a 
+                            href="tel:+917541062514" 
+                            onClick={(e) => copyToClipboard(e, "+91 7541062514", "Phone number", "tel:+917541062514")}
+                            className="text-neutral-400 hover:text-primary-600 transition-colors" 
+                            aria-label="Call"
+                          >
                             <Phone className="w-5 h-5" />
                           </a>
                         </>
@@ -168,6 +228,14 @@ export default function TeamPage() {
           </motion.div>
         </div>
       </section>
+
+      {/* Floating Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 bg-neutral-900 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 z-50 text-sm border border-neutral-800 animate-in fade-in slide-in-from-bottom-5 duration-300">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+          <span>{toastMessage}</span>
+        </div>
+      )}
     </main>
   );
 }

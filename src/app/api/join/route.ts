@@ -62,7 +62,7 @@ export async function POST(request: Request) {
       <p>Your commitment to creating positive change means a lot to us. Together, we can make a real difference—one act of kindness at a time.</p>
       <p><strong>Important:</strong> Please read our <a href="${HANDBOOK_URL}" style="color: ${EMAIL_BRAND.primary}; font-weight: 600;">Team Instruction Handbook</a> — it contains all necessary policies and guidelines that all volunteers must follow.</p>
       <p>Stay tuned for updates on upcoming initiatives, events, and ways to get involved.</p>
-      <p>For any query or doubt, please reply to this email or contact us at <a href="mailto:morethanme.ngo@gmail.com" style="color: ${EMAIL_BRAND.primary}; font-weight: 600;">morethanme.ngo@gmail.com</a>.</p>
+      <p>For any query or doubt, please reply to this email or contact us at <a href="mailto:morethanme@rishihood.edu.in" style="color: ${EMAIL_BRAND.primary}; font-weight: 600;">morethanme@rishihood.edu.in</a>.</p>
       <p style="margin-top: 24px;">With gratitude,<br/><strong>The MoreThanMe Team</strong></p>
     `;
     sendEmail({

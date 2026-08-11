@@ -161,7 +161,7 @@ export function buildNewsletterEmailHtml(opts: NewsletterEmailOptions): string {
     <a href="${NEWSLETTER_WEBSITE_URL}" style="color: ${BRAND.primary}; font-weight: 600; text-decoration: none;">Visit our website →</a>
   </p>
 
-  <p>for any query or doubt, please reply to this email or contact us at <a href="mailto:morethanme.ngo@gmail.com" style="color: ${BRAND.primary}; font-weight: 600;">morethanme.ngo@gmail.com</a>.</p>
+  <p>for any query or doubt, please reply to this email or contact us at <a href="mailto:morethanme@rishihood.edu.in" style="color: ${BRAND.primary}; font-weight: 600;">morethanme@rishihood.edu.in</a>.</p>
 
   <p style="color: ${BRAND.textMuted}; font-size: 12px; margin-top: 32px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
     — MoreThanMe · Rishihood University <span style="color: ${BRAND.primary};">&</span> Newton School of Technology

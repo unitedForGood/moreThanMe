@@ -63,6 +63,6 @@ where not exists (select 1 from public.team_members limit 1);
 
 -- Seed default site contact info (optional)
 insert into public.site_settings (key, value) values
-  ('contact_email', 'unitedforgood2025@gmail.com'),
+  ('contact_email', 'morethanme@rishihood.edu.in'),
   ('contact_phone', '+91 7541062514')
 on conflict (key) do update set value = excluded.value, updated_at = now();
