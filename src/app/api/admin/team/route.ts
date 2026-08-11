@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminFromRequest } from "@/lib/adminAuth";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { requireAdminRole } from "@/lib/adminRoleServer";
+import { sendEmail, wrapEmailContent, EMAIL_BRAND } from "@/lib/brevo";
 
 export async function GET(request: Request) {
   const admin = await getAdminFromRequest(request);
@@ -89,9 +90,33 @@ export async function PATCH(request: Request) {
   if (body.why_join !== undefined) updates.why_join = body.why_join ? String(body.why_join).trim() : null;
   if (body.approval_status !== undefined) updates.approval_status = String(body.approval_status).trim();
 
+  const oldDoc = await adminDb.collection("team_members").doc(id).get();
+  const oldData = oldDoc.data();
+
   await adminDb.collection("team_members").doc(id).update(updates);
   const doc = await adminDb.collection("team_members").doc(id).get();
-  return NextResponse.json({ id: doc.id, ...doc.data() });
+  const data = doc.data();
+
+  if (oldData?.approval_status === "pending" && updates.approval_status === "approved" && data?.email) {
+    const name = data.name || "Volunteer";
+    const emailHtml = `
+      <h2 style="color: ${EMAIL_BRAND.primary}; margin-top: 0;">Welcome to the Team, ${name}!</h2>
+      <p>Your volunteer application for <strong>MoreThanMe</strong> has been approved by our admin team.</p>
+      <p>You can now log into the volunteer portal. Please use the password you set while filling out the volunteer form. If you did not set a password or have forgotten it, you can use your email address (in all lowercase) as your default password, and reset it once you log in.</p>
+      <p>Once logged in, please make sure to mark your availability and explore the portal.</p>
+      <p><strong>Join our WhatsApp Group:</strong><br/>
+      Stay connected with the team and get the latest updates by joining our WhatsApp group: <a href="https://chat.whatsapp.com/BdFJtklPPwoDHQzGRlcs42?s=qt&p=a&ilr=1" style="color: ${EMAIL_BRAND.primary}; font-weight: 600;">Join here</a>.</p>
+      <p style="margin-top: 24px;">Welcome aboard!<br/><strong>The MoreThanMe Team</strong></p>
+    `;
+
+    sendEmail({
+      to: [{ email: data.email, name: name }],
+      subject: "Your Volunteer Application is Approved! 🎉",
+      htmlContent: wrapEmailContent(emailHtml),
+    }).catch((err) => console.error("Approval email failed:", err));
+  }
+
+  return NextResponse.json({ id: doc.id, ...data });
 }
 
 export async function DELETE(request: Request) {
