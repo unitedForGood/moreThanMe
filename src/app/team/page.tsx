@@ -20,7 +20,7 @@ export default function TeamPage() {
 
   const copyToClipboard = (e: React.MouseEvent, text: string, label: string, href: string) => {
     e.preventDefault();
-    
+
     const fallbackCopy = (val: string) => {
       const textArea = document.createElement("textarea");
       textArea.value = val;
@@ -78,7 +78,7 @@ export default function TeamPage() {
             <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-100 rounded-2xl mb-8 shadow-sm">
               <Users className="w-8 h-8 text-primary-600" />
             </div>
-            
+
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -87,7 +87,7 @@ export default function TeamPage() {
             >
               Meet Our Team
             </motion.h1>
-            
+
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -146,39 +146,39 @@ export default function TeamPage() {
                     <p className="text-primary-600 font-medium mb-4">{member.role}</p>
                     <div className="flex justify-center gap-3">
                       {member.email && (
-                        <a 
-                          href={`mailto:${member.email}`} 
+                        <a
+                          href={`mailto:${member.email}`}
                           onClick={(e) => copyToClipboard(e, member.email || "", "Email address", `mailto:${member.email}`)}
-                          className="text-neutral-400 hover:text-primary-600 transition-colors" 
+                          className="text-neutral-400 hover:text-primary-600 transition-colors"
                           aria-label="Email"
                         >
                           <Mail className="w-5 h-5" />
                         </a>
                       )}
-                      {member.phone && (
-                        <a 
-                          href={`tel:${member.phone.replace(/\s/g, "")}`} 
-                          onClick={(e) => copyToClipboard(e, member.phone || "", "Phone number", `tel:${member.phone.replace(/\s/g, "")}`)}
-                          className="text-neutral-400 hover:text-primary-600 transition-colors" 
+                      {member?.phone && (
+                        <a
+                          href={`tel:${member.phone.replace(/\s/g, "")}`}
+                          onClick={(e) => copyToClipboard(e, member.phone!, "Phone number", `tel:${member.phone!.replace(/\s/g, "")}`)}
+                          className="text-neutral-400 hover:text-primary-600 transition-colors"
                           aria-label="Call"
                         >
                           <Phone className="w-5 h-5" />
                         </a>
                       )}
-                      {!member.email && !member.phone && (
+                      {!member.email && !member?.phone && (
                         <>
-                          <a 
-                            href="mailto:morethanme@rishihood.edu.in" 
+                          <a
+                            href="mailto:morethanme@rishihood.edu.in"
                             onClick={(e) => copyToClipboard(e, "morethanme@rishihood.edu.in", "Email address", "mailto:morethanme@rishihood.edu.in")}
-                            className="text-neutral-400 hover:text-primary-600 transition-colors" 
+                            className="text-neutral-400 hover:text-primary-600 transition-colors"
                             aria-label="Email"
                           >
                             <Mail className="w-5 h-5" />
                           </a>
-                          <a 
-                            href="tel:+917541062514" 
+                          <a
+                            href="tel:+917541062514"
                             onClick={(e) => copyToClipboard(e, "+91 7541062514", "Phone number", "tel:+917541062514")}
-                            className="text-neutral-400 hover:text-primary-600 transition-colors" 
+                            className="text-neutral-400 hover:text-primary-600 transition-colors"
                             aria-label="Call"
                           >
                             <Phone className="w-5 h-5" />

@@ -23,7 +23,7 @@ export async function GET(request: Request) {
         id: member.id,
         name: member.name,
         email: member.email,
-        phone: member.phone,
+        phone: member?.phone,
         role: member.role,
         is_founding_member: member.is_founding_member,
         is_core_member: member.is_core_member,
