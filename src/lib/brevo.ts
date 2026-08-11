@@ -16,7 +16,7 @@ export const EMAIL_BRAND = {
 } as const;
 
 const WEBSITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://morethanme.in";
-const CONTACT_EMAIL = "morethanme.ngo@gmail.com";
+const CONTACT_EMAIL = "morethanme@rishihood.edu.in";
 
 /** Rule handbook URL (Team Instruction Handbook) - configurable via HANDBOOK_URL in .env.local */
 export const HANDBOOK_URL =
@@ -56,7 +56,7 @@ export interface SendEmailOptions {
 
 export async function sendEmail(options: SendEmailOptions): Promise<{ messageId?: string; error?: string }> {
   const apiKey = process.env.BREVO_API_KEY;
-  const senderEmail = process.env.BREVO_SENDER_EMAIL || "unitedforgood2025@gmail.com";
+  const senderEmail = process.env.BREVO_SENDER_EMAIL || "morethanme@rishihood.edu.in";
   const senderName = process.env.BREVO_SENDER_NAME || "MoreThanMe";
 
   if (!apiKey) {
@@ -153,7 +153,7 @@ export async function getOrCreateNewsletterList(apiKey: string): Promise<{ listI
  */
 export async function sendNewsletterCampaign(options: NewsletterCampaignOptions): Promise<{ sent?: number; campaignId?: number; error?: string }> {
   const apiKey = process.env.BREVO_API_KEY;
-  const senderEmail = process.env.BREVO_SENDER_EMAIL || "unitedforgood2025@gmail.com";
+  const senderEmail = process.env.BREVO_SENDER_EMAIL || "morethanme@rishihood.edu.in";
   const senderName = process.env.BREVO_SENDER_NAME || "MoreThanMe";
 
   if (!apiKey) {

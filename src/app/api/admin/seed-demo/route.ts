@@ -15,7 +15,7 @@ export async function POST(request: Request) {
 
     // 1. Site settings (use set with merge so we don't overwrite)
     const heroUrl = "https://res.cloudinary.com/dpuhlmcth/image/upload/v1753466891/DSC1803-scaled_enhcsi.jpg";
-    batch.set(adminDb.collection("site_settings").doc("contact_email"), { value: "unitedforgood2025@gmail.com" }, { merge: true });
+    batch.set(adminDb.collection("site_settings").doc("contact_email"), { value: "morethanme@rishihood.edu.in" }, { merge: true });
     batch.set(adminDb.collection("site_settings").doc("contact_phone"), { value: "+91 7541062514" }, { merge: true });
     batch.set(adminDb.collection("site_settings").doc("contact_address"), { value: "Rishihood University, Sonipat, Haryana, India" }, { merge: true });
     batch.set(adminDb.collection("site_settings").doc("hero_image_url"), { value: heroUrl }, { merge: true });

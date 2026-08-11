@@ -11,6 +11,7 @@ import ThanksFormSection from "../../components/ThanksFormSection";
 export default function ContactPage() {
   const router = useRouter();
   const [settings, setSettings] = useState<{ contact_email?: string; contact_phone?: string; contact_address?: string }>({});
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/site-settings")
@@ -22,6 +23,45 @@ export default function ContactPage() {
   const email = settings.contact_email || "";
   const phone = settings.contact_phone || "";
   const address = settings.contact_address || "";
+
+  const copyToClipboard = (e: React.MouseEvent, text: string, label: string, href: string) => {
+    e.preventDefault();
+    
+    const fallbackCopy = (val: string) => {
+      const textArea = document.createElement("textarea");
+      textArea.value = val;
+      textArea.style.position = "fixed";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+      } catch (err) {
+        console.error('Fallback copy failed', err);
+      }
+      document.body.removeChild(textArea);
+    };
+
+    const showToastAndRedirect = () => {
+      setToastMessage(`${label} copied to clipboard!`);
+      setTimeout(() => setToastMessage(null), 3000);
+      setTimeout(() => {
+        window.location.href = href;
+      }, 150);
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToastAndRedirect();
+      }).catch(() => {
+        fallbackCopy(text);
+        showToastAndRedirect();
+      });
+    } else {
+      fallbackCopy(text);
+      showToastAndRedirect();
+    }
+  };
 
   return (
     <main>
@@ -137,9 +177,15 @@ export default function ContactPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: 0.1 }}
-                className="group"
+                className="group cursor-pointer"
               >
-                <div className="bg-white rounded-2xl p-8 text-center border border-neutral-200 hover:border-primary-200 hover:shadow-lg transition-all duration-300 h-full">
+                <a 
+                  href={`mailto:${email}`}
+                  onClick={(e) => {
+                    copyToClipboard(e, email, "Email address", `mailto:${email}`);
+                  }}
+                  className="block bg-white rounded-2xl p-8 text-center border border-neutral-200 hover:border-primary-200 hover:shadow-lg transition-all duration-300 h-full"
+                >
                   <div className="w-16 h-16 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-primary-200 transition-colors">
                     <Mail className="w-8 h-8 text-primary-600" />
                   </div>
@@ -147,10 +193,10 @@ export default function ContactPage() {
                   <p className="text-neutral-600 leading-relaxed mb-4">
                     Send us a message and we&apos;ll get back to you within 24 hours.
                   </p>
-                  <a href={`mailto:${email}`} className="text-primary-600 hover:text-primary-700 font-medium">
+                  <span className="text-primary-600 hover:text-primary-700 font-medium break-all">
                     {email}
-                  </a>
-                </div>
+                  </span>
+                </a>
               </motion.div>
             )}
 
@@ -160,9 +206,15 @@ export default function ContactPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: 0.2 }}
-                className="group"
+                className="group cursor-pointer"
               >
-                <div className="bg-white rounded-2xl p-8 text-center border border-neutral-200 hover:border-primary-200 hover:shadow-lg transition-all duration-300 h-full">
+                <a 
+                  href={`tel:${phone.replace(/\s/g, "")}`}
+                  onClick={(e) => {
+                    copyToClipboard(e, phone, "Phone number", `tel:${phone.replace(/\s/g, "")}`);
+                  }}
+                  className="block bg-white rounded-2xl p-8 text-center border border-neutral-200 hover:border-primary-200 hover:shadow-lg transition-all duration-300 h-full"
+                >
                   <div className="w-16 h-16 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-primary-200 transition-colors">
                     <Phone className="w-8 h-8 text-primary-600" />
                   </div>
@@ -170,10 +222,10 @@ export default function ContactPage() {
                   <p className="text-neutral-600 leading-relaxed mb-4">
                     Speak directly with our team for immediate assistance.
                   </p>
-                  <a href={`tel:${phone.replace(/\s/g, "")}`} className="block text-primary-600 hover:text-primary-700 font-medium">
+                  <span className="text-primary-600 hover:text-primary-700 font-medium">
                     {phone}
-                  </a>
-                </div>
+                  </span>
+                </a>
               </motion.div>
             )}
 
@@ -284,6 +336,14 @@ export default function ContactPage() {
           </motion.div>
         </div>
       </section>
+
+      {/* Floating Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 bg-neutral-900 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 z-50 text-sm border border-neutral-800 animate-in fade-in slide-in-from-bottom-5 duration-300">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+          <span>{toastMessage}</span>
+        </div>
+      )}
     </main>
   );
 }

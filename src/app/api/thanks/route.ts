@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { sendEmail, wrapEmailContent, EMAIL_BRAND } from "@/lib/brevo";
 
-const TEAM_EMAIL_FALLBACK = "morethanme.ngo@gmail.com";
+const TEAM_EMAIL_FALLBACK = "morethanme@rishihood.edu.in";
 
 function escapeHtml(s: string): string {
   return s

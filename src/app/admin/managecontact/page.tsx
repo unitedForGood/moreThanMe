@@ -162,7 +162,7 @@ export default function AdminManageContactPage() {
             Site contact info (shown on Contact page)
           </h3>
           <ul className="space-y-2 text-sm text-primary-800 dark:text-primary-200">
-            <li><strong>Email:</strong> {settings.contact_email || "unitedforgood2025@gmail.com"}</li>
+            <li><strong>Email:</strong> {settings.contact_email || "morethanme@rishihood.edu.in"}</li>
             <li><strong>Phone:</strong> {settings.contact_phone || "+91 7541062514"}</li>
           </ul>
           <p className="mt-4 text-xs text-primary-600 dark:text-primary-300">
