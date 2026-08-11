@@ -89,7 +89,7 @@ export default function AboutPage() {
           setFoundingMembers(founding);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -100,7 +100,7 @@ export default function AboutPage() {
         if (aboutImg?.url) setStoryImageUrl(aboutImg.url);
         else if (Array.isArray(data) && data.length > 0) setStoryImageUrl(data[0].url);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -114,7 +114,7 @@ export default function AboutPage() {
           setFeaturedPhotos(imagesOnly);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const hasFeaturedSlideshow = featuredPhotos.length > 0;
@@ -218,9 +218,8 @@ export default function AboutPage() {
                               key={i}
                               type="button"
                               onClick={() => setFeaturedIndex(i)}
-                              className={`h-2 rounded-full transition-all ${
-                                i === featuredIndex ? "w-6 bg-white" : "w-2 bg-white/50 hover:bg-white/70"
-                              }`}
+                              className={`h-2 rounded-full transition-all ${i === featuredIndex ? "w-6 bg-white" : "w-2 bg-white/50 hover:bg-white/70"
+                                }`}
                               aria-label={`Go to image ${i + 1}`}
                             />
                           ))}
@@ -301,14 +300,14 @@ export default function AboutPage() {
                       <span className="truncate max-w-[180px]">{member.email}</span>
                     </a>
                   )}
-                  {member.phone && (
+                  {member?.phone && (
                     <a
-                      href={`tel:${member.phone}`}
+                      href={`tel:${member?.phone}`}
                       className="inline-flex items-center gap-1.5 text-neutral-500 hover:text-primary-600 transition-colors"
                       aria-label={`Phone ${member.name}`}
                     >
                       <Phone className="w-4 h-4 shrink-0" />
-                      <span>{member.phone}</span>
+                      <span>{member?.phone}</span>
                     </a>
                   )}
                   {member.linkedin && (

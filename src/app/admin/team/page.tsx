@@ -249,33 +249,33 @@ export default function AdminTeamPage() {
   const searchLower = searchQuery.trim().toLowerCase();
   const filteredTeam = searchLower
     ? tabFilteredTeam.filter((m) => {
-        const name = (m.name || "").toLowerCase();
-        const email = (m.email || "").toLowerCase();
-        const phone = (m.phone || "").toLowerCase();
-        const enrollment = (m.enrollment || "").toLowerCase();
-        const batch = (m.batch || "").toLowerCase();
-        const course = (m.course || "").toLowerCase();
-        const role = (m.role || "").toLowerCase();
-        const whyJoin = (m.why_join || "").toLowerCase();
-        return (
-          name.includes(searchLower) ||
-          email.includes(searchLower) ||
-          phone.includes(searchLower) ||
-          enrollment.includes(searchLower) ||
-          batch.includes(searchLower) ||
-          course.includes(searchLower) ||
-          role.includes(searchLower) ||
-          whyJoin.includes(searchLower)
-        );
-      })
+      const name = (m.name || "").toLowerCase();
+      const email = (m.email || "").toLowerCase();
+      const phone = (m.phone || "").toLowerCase();
+      const enrollment = (m.enrollment || "").toLowerCase();
+      const batch = (m.batch || "").toLowerCase();
+      const course = (m.course || "").toLowerCase();
+      const role = (m.role || "").toLowerCase();
+      const whyJoin = (m.why_join || "").toLowerCase();
+      return (
+        name.includes(searchLower) ||
+        email.includes(searchLower) ||
+        phone.includes(searchLower) ||
+        enrollment.includes(searchLower) ||
+        batch.includes(searchLower) ||
+        course.includes(searchLower) ||
+        role.includes(searchLower) ||
+        whyJoin.includes(searchLower)
+      );
+    })
     : tabFilteredTeam;
 
   const filteredDonors = searchLower
     ? donors.filter((d) => {
-        const name = (d.name || "").toLowerCase();
-        const message = (d.message || "").toLowerCase();
-        return name.includes(searchLower) || message.includes(searchLower);
-      })
+      const name = (d.name || "").toLowerCase();
+      const message = (d.message || "").toLowerCase();
+      return name.includes(searchLower) || message.includes(searchLower);
+    })
     : donors;
 
   type FamilyItem = { _type: "donor"; donor: Donor } | { _type: "team"; member: TeamMember };
@@ -285,17 +285,17 @@ export default function AdminTeamPage() {
   ];
   const filteredOurFamily = searchLower
     ? ourFamilyList.filter((item) => {
-        if (item._type === "donor") {
-          const name = (item.donor.name || "").toLowerCase();
-          const message = (item.donor.message || "").toLowerCase();
-          return name.includes(searchLower) || message.includes(searchLower);
-        }
-        const m = item.member;
-        const name = (m.name || "").toLowerCase();
-        const email = (m.email || "").toLowerCase();
-        const role = (m.role || "").toLowerCase();
-        return name.includes(searchLower) || email.includes(searchLower) || role.includes(searchLower);
-      })
+      if (item._type === "donor") {
+        const name = (item.donor.name || "").toLowerCase();
+        const message = (item.donor.message || "").toLowerCase();
+        return name.includes(searchLower) || message.includes(searchLower);
+      }
+      const m = item.member;
+      const name = (m.name || "").toLowerCase();
+      const email = (m.email || "").toLowerCase();
+      const role = (m.role || "").toLowerCase();
+      return name.includes(searchLower) || email.includes(searchLower) || role.includes(searchLower);
+    })
     : ourFamilyList;
 
   const counts = {
@@ -350,11 +350,10 @@ export default function AdminTeamPage() {
                 key={key}
                 type="button"
                 onClick={() => setFilterTab(key)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  filterTab === key
-                    ? "bg-primary-600 text-white"
-                    : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-                }`}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filterTab === key
+                  ? "bg-primary-600 text-white"
+                  : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                  }`}
               >
                 {label} <span className="opacity-80">({count})</span>
               </button>
@@ -614,10 +613,10 @@ export default function AdminTeamPage() {
                           {[member.enrollment, member.batch, member.course].filter(Boolean).join(" · ")}
                         </div>
                       )}
-                      {(member.email || member.phone) && (
+                      {(member.email || member?.phone) && (
                         <div className="flex gap-2 mt-1 text-gray-500 dark:text-gray-400 text-xs">
                           {member.email && <span className="flex items-center gap-1"><Mail className="w-3 h-3" /> {member.email}</span>}
-                          {member.phone && <span className="flex items-center gap-1"><Phone className="w-3 h-3" /> {member.phone}</span>}
+                          {member?.phone && <span className="flex items-center gap-1"><Phone className="w-3 h-3" /> {member?.phone}</span>}
                         </div>
                       )}
                     </div>
