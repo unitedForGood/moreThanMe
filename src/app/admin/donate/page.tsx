@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import * as xlsx from "xlsx";
 
 interface Donation {
   id: string;
@@ -36,6 +37,10 @@ export default function AdminDonatePage() {
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  const [bulkAdding, setBulkAdding] = useState(false);
+  const [bulkFile, setBulkFile] = useState<File | null>(null);
+  const [bulkDefaultName, setBulkDefaultName] = useState("Bulk Import");
+  const [bulkResult, setBulkResult] = useState<{ imported: number; skipped: number; errors?: string[] } | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formName, setFormName] = useState("");
   const [formAmount, setFormAmount] = useState("");
@@ -107,6 +112,7 @@ export default function AdminDonatePage() {
   const startAdd = () => {
     resetForm();
     setAdding(true);
+    setBulkAdding(false);
     setError(null);
   };
 
@@ -153,6 +159,62 @@ export default function AdminDonatePage() {
       resetForm();
       setAdding(false);
       await Promise.all([fetchDonations(), fetchStats()]);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleBulkUpload = async () => {
+    if (!bulkFile) return;
+    setSaving(true);
+    setError(null);
+    setBulkResult(null);
+
+    try {
+      const data = await bulkFile.arrayBuffer();
+      const workbook = xlsx.read(data);
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const json = xlsx.utils.sheet_to_json<any>(worksheet);
+
+      const mappedDonations = json.map((row: any) => {
+        const txId = row["PhonePe Reference Id"] || row["Transaction UTR"] || row["Merchant Reference Id"];
+        const amount = row["Total Transaction Amount"] || row["UPI Amount"];
+        const status = row["Transaction Status"] === "COMPLETED" ? "verified" : "pending_verification";
+        const date = row["Transaction Date"];
+        return {
+          name: bulkDefaultName || "Bulk Import",
+          amount: Number(amount),
+          transaction_id: String(txId || "").trim(),
+          status,
+          date
+        };
+      }).filter((d: any) => d.transaction_id && d.transaction_id !== "undefined" && !Number.isNaN(d.amount));
+
+      if (mappedDonations.length === 0) {
+         setError("No valid donations found in the file. Make sure the file matches the expected format.");
+         setSaving(false);
+         return;
+      }
+
+      const res = await fetch("/api/admin/donations/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ donations: mappedDonations }),
+      });
+      
+      const resData = await res.json().catch(() => ({}));
+      
+      if (!res.ok) {
+         setError(resData.error || "Failed to process bulk upload.");
+      } else {
+         setBulkResult({ imported: resData.imported, skipped: resData.skipped, errors: resData.errors });
+         setBulkFile(null);
+         await Promise.all([fetchDonations(), fetchStats()]);
+      }
+    } catch (err: any) {
+      setError("Error parsing file: " + err.message);
     } finally {
       setSaving(false);
     }
@@ -224,6 +286,19 @@ export default function AdminDonatePage() {
           className="px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700"
         >
           + Add manual donation
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            resetForm();
+            setBulkAdding(true);
+            setAdding(false);
+            setError(null);
+            setBulkResult(null);
+          }}
+          className="px-4 py-2 rounded-lg border border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400 text-sm font-medium hover:bg-primary-50 dark:hover:bg-primary-900/20"
+        >
+          Bulk Upload (CSV/Excel)
         </button>
         {editingId && (
           <span className="text-sm text-gray-600 dark:text-gray-400">
@@ -305,6 +380,79 @@ export default function AdminDonatePage() {
               onClick={() => {
                 resetForm();
                 setAdding(false);
+              }}
+              className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-700 dark:text-gray-300"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {bulkAdding && (
+        <div className="mb-8 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-4">
+          <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
+            Bulk Upload Donations
+          </h3>
+          
+          {bulkResult && (
+            <div className="p-3 bg-green-50 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-lg text-sm mb-4">
+              Successfully imported {bulkResult.imported} donations. Skipped {bulkResult.skipped} duplicates.
+              {bulkResult.errors && bulkResult.errors.length > 0 && (
+                 <div className="mt-2 text-red-600 text-xs">
+                   Errors: {bulkResult.errors.length} rows had issues.
+                 </div>
+              )}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                File (CSV or Excel)
+              </label>
+              <input
+                type="file"
+                accept=".csv, .xlsx, .xls"
+                onChange={(e) => setBulkFile(e.target.files?.[0] || null)}
+                className="block w-full text-sm text-gray-900 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 dark:file:bg-primary-900/30 dark:file:text-primary-400"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Default Donor Name (for all rows)
+              </label>
+              <input
+                type="text"
+                value={bulkDefaultName}
+                onChange={(e) => setBulkDefaultName(e.target.value)}
+                placeholder="e.g. Bulk Import"
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white"
+              />
+            </div>
+          </div>
+          
+          {error && (
+            <div className="text-sm text-red-600 dark:text-red-400">
+              {error}
+            </div>
+          )}
+          
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleBulkUpload}
+              disabled={saving || !bulkFile}
+              className="px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 disabled:opacity-50"
+            >
+              {saving ? "Processing..." : "Upload & Process"}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setBulkAdding(false);
+                setBulkFile(null);
+                setBulkResult(null);
               }}
               className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-700 dark:text-gray-300"
             >
