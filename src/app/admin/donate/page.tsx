@@ -172,7 +172,7 @@ export default function AdminDonatePage() {
 
     try {
       const data = await bulkFile.arrayBuffer();
-      const workbook = xlsx.read(data);
+      const workbook = xlsx.read(data, { cellDates: true });
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
       const json = xlsx.utils.sheet_to_json<any>(worksheet);
