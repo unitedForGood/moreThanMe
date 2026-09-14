@@ -197,7 +197,7 @@ export default function OurFamilyPage() {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.4 }}
             className="text-center"
           >
             <span className="inline-flex items-center px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm text-white text-sm font-medium mb-8 border border-white/20">
@@ -207,7 +207,7 @@ export default function OurFamilyPage() {
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
               className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-6 sm:mb-8 leading-tight"
             >
             Our Amazing Family
@@ -216,7 +216,7 @@ export default function OurFamilyPage() {
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
+              transition={{ duration: 0.3, delay: 0.4 }}
               className="text-lg sm:text-xl text-white/90 mb-8 sm:mb-12 max-w-4xl mx-auto leading-relaxed"
             >
               Every donation creates ripples of hope. Every volunteer amplifies our impact. 
@@ -226,7 +226,7 @@ export default function OurFamilyPage() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.6 }}
+              transition={{ duration: 0.3, delay: 0.6 }}
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 max-w-4xl mx-auto"
             >
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
@@ -264,7 +264,7 @@ export default function OurFamilyPage() {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.4 }}
             className="text-center mb-16"
           >
             <span className="inline-flex items-center px-4 py-2 rounded-full bg-primary-100 text-primary-700 text-sm font-medium mb-6">
@@ -281,7 +281,7 @@ export default function OurFamilyPage() {
               initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.2 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
             >
               <div className="bg-primary-50 rounded-2xl p-8 border border-primary-100">
                 <div className="flex items-start gap-4 mb-6">
@@ -315,7 +315,7 @@ export default function OurFamilyPage() {
               initial={{ opacity: 0, x: 30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.4 }}
+              transition={{ duration: 0.3, delay: 0.4 }}
               className="space-y-6"
             >
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-neutral-200 hover:shadow-lg transition-all duration-300">
@@ -361,7 +361,7 @@ export default function OurFamilyPage() {
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
+              transition={{ duration: 0.4 }}
               className="text-center"
             >
               <span className="inline-flex items-center px-4 py-2 rounded-full bg-primary-100 text-primary-700 text-sm font-medium mb-6">
@@ -415,7 +415,7 @@ export default function OurFamilyPage() {
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.8 }}
+                transition={{ duration: 0.4 }}
                 className="text-center mb-16"
               >
                 <h2 className="text-4xl font-bold text-primary-800 mb-6">
@@ -465,7 +465,7 @@ export default function OurFamilyPage() {
                       initial={{ opacity: 0, y: 30 }}
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
-                      transition={{ duration: 0.6, delay: index * 0.1 }}
+                      transition={{ duration: 0.3, delay: index * 0.1 }}
                       className="bg-white rounded-2xl p-6 shadow-sm border border-primary-100 hover:shadow-lg transition-all duration-300 group"
                   >
                     <div className="text-center">
@@ -563,7 +563,7 @@ export default function OurFamilyPage() {
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
+              transition={{ duration: 0.4 }}
             >
               <span className="inline-flex items-center px-4 py-2 rounded-full bg-white text-primary-700 text-sm font-medium mb-8 shadow-sm">
                 Join Us Today
@@ -573,7 +573,7 @@ export default function OurFamilyPage() {
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: 0.2 }}
+                transition={{ duration: 0.3, delay: 0.2 }}
                 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-primary-800 mb-6 leading-tight"
               >
               Ready to Join Our Family?
@@ -583,7 +583,7 @@ export default function OurFamilyPage() {
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: 0.4 }}
+                transition={{ duration: 0.3, delay: 0.4 }}
                 className="text-lg sm:text-xl text-neutral-600 mb-8 sm:mb-10 leading-relaxed"
               >
                 Every contribution makes a difference. Be part of our mission to create positive change.
@@ -593,7 +593,7 @@ export default function OurFamilyPage() {
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: 0.6 }}
+                transition={{ duration: 0.3, delay: 0.6 }}
                 className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center"
               >
                 <Button

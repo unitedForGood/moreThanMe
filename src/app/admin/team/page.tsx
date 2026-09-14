@@ -79,6 +79,13 @@ export default function AdminTeamPage() {
   const [newCourse, setNewCourse] = useState("");
   const [newWhyJoin, setNewWhyJoin] = useState("");
 
+  const [onboardingModal, setOnboardingModal] = useState(false);
+  const [onboardingTarget, setOnboardingTarget] = useState<string | "all">("all");
+  const [onboardingTime, setOnboardingTime] = useState("");
+  const [onboardingVenue, setOnboardingVenue] = useState("");
+  const [sendingOnboarding, setSendingOnboarding] = useState(false);
+  const [onboardingStatusMessage, setOnboardingStatusMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
   const fetchTeam = async () => {
     const res = await fetch("/api/admin/team", { credentials: "include" });
     const data = await res.json().catch(() => []);
@@ -228,6 +235,51 @@ export default function AdminTeamPage() {
     }
   };
 
+  const handleSendOnboarding = async () => {
+    if (!onboardingTime.trim() || !onboardingVenue.trim()) {
+      setOnboardingStatusMessage({ type: "error", text: "Time and venue are required." });
+      return;
+    }
+    setSendingOnboarding(true);
+    setOnboardingStatusMessage(null);
+    try {
+      const payload = {
+        memberIds: onboardingTarget === "all" ? [] : [onboardingTarget],
+        time: onboardingTime,
+        venue: onboardingVenue,
+      };
+      const res = await fetch("/api/admin/team/onboarding-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setOnboardingStatusMessage({ type: "success", text: `Successfully sent ${data.sent} email(s)! ${data.errors ? `(${data.errors} failed)` : ""}` });
+        setTimeout(() => {
+          setOnboardingModal(false);
+          setOnboardingStatusMessage(null);
+          setOnboardingTime("");
+          setOnboardingVenue("");
+        }, 3000);
+      } else {
+        setOnboardingStatusMessage({ type: "error", text: data.error || "Failed to send emails." });
+      }
+    } catch (err) {
+      setOnboardingStatusMessage({ type: "error", text: "Network error occurred." });
+    } finally {
+      setSendingOnboarding(false);
+    }
+  };
+
+  const openOnboardingModal = (targetId: string | "all") => {
+    setOnboardingTarget(targetId);
+    setOnboardingTime("");
+    setOnboardingVenue("");
+    setOnboardingStatusMessage(null);
+    setOnboardingModal(true);
+  };
+
   const tabFilteredTeam = (() => {
     switch (filterTab) {
       case "pending":
@@ -359,6 +411,18 @@ export default function AdminTeamPage() {
               </button>
             ))}
           </div>
+
+          {filterTab === "pending" && counts.pending > 0 && (
+            <div className="flex justify-end mt-2">
+              <button
+                onClick={() => openOnboardingModal("all")}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors"
+              >
+                <Mail className="w-4 h-4" />
+                Bulk Invite All Pending
+              </button>
+            </div>
+          )}
 
           {filterTab === "donors" &&
             filteredDonors.map((donor) => (
@@ -630,6 +694,11 @@ export default function AdminTeamPage() {
                         <button onClick={() => updateApprovalStatus(member.id, "rejected")} className="text-sm px-3 py-1.5 rounded-lg border border-red-300 dark:border-red-800 text-red-600 dark:text-red-400 font-medium hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors">
                           Reject
                         </button>
+                        {member.email && (
+                          <button onClick={() => openOnboardingModal(member.id)} className="text-sm px-3 py-1.5 rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400 font-medium hover:bg-primary-100 dark:hover:bg-primary-900/40 transition-colors flex items-center gap-1">
+                            <Mail className="w-3 h-3" /> Invite
+                          </button>
+                        )}
                       </>
                     )}
                     <button onClick={() => startEdit(member)} className="text-sm text-primary-600 dark:text-primary-400 font-medium hover:underline">
@@ -745,6 +814,66 @@ export default function AdminTeamPage() {
               + Add team member
             </button>
           ) : null}
+        </div>
+      )}
+
+      {onboardingModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md overflow-hidden flex flex-col">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+              <h3 className="font-bold text-lg text-gray-900 dark:text-white">
+                {onboardingTarget === "all" ? "Bulk Onboarding Invite" : "Send Onboarding Invite"}
+              </h3>
+              <button onClick={() => setOnboardingModal(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                &times;
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              {onboardingStatusMessage && (
+                <div className={`p-3 rounded-lg text-sm font-medium ${onboardingStatusMessage.type === "success" ? "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300" : "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300"}`}>
+                  {onboardingStatusMessage.text}
+                </div>
+              )}
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                This will send a highly professional email to the selected pending member(s) requesting a discussion before approval.
+              </p>
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Date & Time</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Tomorrow at 5:00 PM, 25th Aug 10:00 AM"
+                  value={onboardingTime}
+                  onChange={(e) => setOnboardingTime(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Venue / Meeting Link</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Google Meet Link, Rishihood Campus"
+                  value={onboardingVenue}
+                  onChange={(e) => setOnboardingVenue(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+            </div>
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex justify-end gap-2">
+              <button
+                onClick={() => setOnboardingModal(false)}
+                className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSendOnboarding}
+                disabled={sendingOnboarding}
+                className="px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 disabled:opacity-50"
+              >
+                {sendingOnboarding ? "Sending..." : "Send Email"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </>
