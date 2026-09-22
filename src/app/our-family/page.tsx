@@ -494,7 +494,7 @@ export default function OurFamilyPage() {
                         <div className="text-xs text-neutral-400 mb-3">
                         {volunteer.university_email}
                       </div>
-                      {volunteer.created_at != null ? (
+                      {!volunteer.is_core_member && volunteer.created_at != null ? (
                           <div className="text-xs text-neutral-400 mb-3">
                           Joined on {formatDate(volunteer.created_at)}
                         </div>
