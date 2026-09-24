@@ -8,7 +8,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const snap = await adminDb.collection("team_members").orderBy("sort_order", "asc").get();
+  const snap = await adminDb.collection("team_members").orderBy("created_at", "desc").get();
   const volunteers = snap.docs
     .filter((d) => d.data().email)
     .map((d) => {

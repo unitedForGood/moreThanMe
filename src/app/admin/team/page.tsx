@@ -32,6 +32,7 @@ interface TeamMember {
   course?: string | null;
   why_join?: string | null;
   approval_status?: string | null;
+  created_at?: unknown;
 }
 
 interface Donor {
@@ -334,7 +335,19 @@ export default function AdminTeamPage() {
   const ourFamilyList: FamilyItem[] = [
     ...donors.map((donor) => ({ _type: "donor" as const, donor })),
     ...team.map((member) => ({ _type: "team" as const, member })),
-  ];
+  ].sort((a, b) => {
+    const getDate = (item: FamilyItem) => {
+      const dateVal = item._type === "donor" ? item.donor.created_at : item.member.created_at;
+      if (!dateVal) return new Date(0);
+      if (typeof dateVal === "string" || typeof dateVal === "number") return new Date(dateVal);
+      const o = dateVal as any;
+      if (typeof o.toDate === "function") return o.toDate();
+      if (typeof o._seconds === "number") return new Date(o._seconds * 1000);
+      if (typeof o.seconds === "number") return new Date(o.seconds * 1000);
+      return new Date(0);
+    };
+    return getDate(b).getTime() - getDate(a).getTime();
+  });
   const filteredOurFamily = searchLower
     ? ourFamilyList.filter((item) => {
       if (item._type === "donor") {

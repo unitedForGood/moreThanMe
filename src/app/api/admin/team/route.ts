@@ -11,8 +11,12 @@ export async function GET(request: Request) {
   const allowed = await requireAdminRole(admin.email, ["super"]);
   if (!allowed) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const snap = await adminDb.collection("team_members").orderBy("sort_order", "asc").get();
-  const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  const snap = await adminDb.collection("team_members").get();
+  const data = snap.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a: any, b: any) => {
+    const dateA = a.created_at ? (typeof a.created_at.toDate === 'function' ? a.created_at.toDate() : new Date(a.created_at)) : new Date(0);
+    const dateB = b.created_at ? (typeof b.created_at.toDate === 'function' ? b.created_at.toDate() : new Date(b.created_at)) : new Date(0);
+    return dateB.getTime() - dateA.getTime();
+  });
   return NextResponse.json(data);
 }
 

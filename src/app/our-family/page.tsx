@@ -51,7 +51,7 @@ export default function OurFamilyPage() {
     fetchData();
   }, []);
 
-  const coreTeam = volunteers.filter((v) => v.is_core_member);
+  const coreTeam = volunteers.filter((v) => v.is_core_member).sort((a, b) => a.name.localeCompare(b.name));
   const volunteersOnly = volunteers.filter((v) => v.role === "Volunteer");
   const listForSection = activeSection === "core" ? coreTeam : volunteersOnly;
 
@@ -465,7 +465,7 @@ export default function OurFamilyPage() {
                       initial={{ opacity: 0, y: 30 }}
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
-                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                      transition={{ duration: 0.3, delay: index * 0.03 }}
                       className="bg-white rounded-2xl p-6 shadow-sm border border-primary-100 hover:shadow-lg transition-all duration-300 group"
                   >
                     <div className="text-center">
